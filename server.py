@@ -190,8 +190,17 @@ def all_nfl_markets():
 
 _snapshot = {"groups": {}, "at": 0}
 
+LAST_VISIT = {"t": time.time()}
+IDLE_AFTER = 300  # seconds with nobody using the app before background checks pause (lets Railway sleep)
+
+def idle():
+    return time.time() - LAST_VISIT["t"] > IDLE_AFTER
+
 def kalshi_loop():
     while True:
+        if idle():
+            time.sleep(5)
+            continue
         try:
             g = all_nfl_markets()
             n = sum(len(v) for v in g.values())
@@ -747,7 +756,8 @@ def equity_curve(st):
 
 def settler():
     while True:
-        safe(settle_open, None)
+        if not idle():
+            safe(settle_open, None)
         time.sleep(60)
 
 # ---------------------------------------------------------------- web server
@@ -769,6 +779,8 @@ class H(BaseHTTPRequestHandler):
 
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
+        if u.path.startswith("/api/") or u.path == "/":
+            LAST_VISIT["t"] = time.time()
         q = dict(urllib.parse.parse_qsl(u.query))
         try:
             if u.path in ("/", "/index.html"):
