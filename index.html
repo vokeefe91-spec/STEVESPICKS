@@ -133,6 +133,8 @@ h2:first-child{margin-top:4px}
 .tourx{position:absolute;right:10px;top:8px;border:0;background:none;font-size:24px;color:var(--sub);line-height:1;padding:6px}
 .mini{display:inline-block;border-radius:8px;padding:2px 8px;font-weight:700;font-size:13px}
 .mini.y{background:var(--yes-bg);color:var(--yes)} .mini.n{background:var(--no-bg);color:var(--no)}
+.ptag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;color:var(--sub);background:var(--soft);border-radius:6px;padding:2px 6px 2px 3px;margin-right:7px;vertical-align:2px;letter-spacing:.03em}
+.ptag .dot{width:16px;height:16px;border-radius:4px;font-size:6px}
 .ladder{display:flex;width:fit-content;align-items:center;gap:2px;border:1px solid var(--line);border-radius:8px;padding:2px;margin:6px 0 2px;max-width:100%;overflow-x:auto}
 .ladder button{border:0;background:none;padding:3px 8px;border-radius:6px;font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums}
 .ladder button.on{color:var(--ink);font-weight:800;background:var(--soft)}
@@ -320,7 +322,7 @@ function pickBtn(m, side, g, text){
   const p = side==="yes" ? m.yes_ask : m.no_ask;
   const cls = side==="yes" ? "yesbtn" : "nobtn";
   if(!p || p<=0 || p>=1) return `<button class="${cls}" disabled style="opacity:.45;cursor:default">${side==="yes"?"Yes":"No"} —</button>`;
-  return `<button class="${cls} ${inSlip(m.ticker,side)?"sel":""}" data-pick='${esc(JSON.stringify({ticker:m.ticker,side,label:m.label,series:m.series,game:g?gameLabel(g):"",price:p}))}'>${text??(side==="yes"?"Yes ":"No ")+cents(p)}</button>`;
+  return `<button class="${cls} ${inSlip(m.ticker,side)?"sel":""}" data-pick='${esc(JSON.stringify({ticker:m.ticker,side,label:m.team?m.label.replace(/^([^:]+)/,"$1 ("+m.team+")"):m.label,series:m.series,game:g?gameLabel(g):"",price:p}))}'>${text??(side==="yes"?"Yes ":"No ")+cents(p)}</button>`;
 }
 
 // ---------------- views
@@ -486,7 +488,9 @@ function rowHtml(r,g){
   let picker="";
   if(ladder){ const lo=Math.max(0,Math.min(i-2,r.items.length-5)), win=r.items.slice(lo,lo+5);
     picker=`<div class="ladder"><button data-step="-1" data-row="${esc(r.key)}" data-cur="${i}" ${i===0?"disabled":""}>‹</button>${win.map((it,k)=>`<button data-pickline="${lo+k}" data-row="${esc(r.key)}" class="${lo+k===i?"on":""}">${esc(String(it.n))}</button>`).join("")}<button data-step="1" data-row="${esc(r.key)}" data-cur="${i}" ${i===r.items.length-1?"disabled":""}>›</button></div>` }
-  return `<div class="mrow"><div class="lbl"><b>${label}</b>${picker}<small>Vol ${Math.round(m.volume).toLocaleString()}</small></div>
+  const tm = m.team ? [g.away,g.home].find(t=>t.abbr===m.team) : null;
+  const tag = tm ? `<span class="ptag">${teamDot(tm)}${esc(tm.abbr)}</span>` : "";
+  return `<div class="mrow"><div class="lbl"><b>${tag}${label}</b>${picker}<small>Vol ${Math.round(m.volume).toLocaleString()}</small></div>
     <div class="chance num">${m.chance!=null?m.chance+"%":"—"}</div>${g.state==="post"?"":pickBtn(m,"yes",g)+pickBtn(m,"no",g)}</div>`;
 }
 function viewPbp(d){
