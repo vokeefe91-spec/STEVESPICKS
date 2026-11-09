@@ -12,7 +12,35 @@
   --yes:#00a86b; --yes-bg:#e6f7f0; --no:#d6336c; --no-bg:#fdecf2; --brand:#0f1419; --live:#e5484d;
   --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
 }
-@media (prefers-color-scheme:dark){:root{
+/* Themes: chosen in the header; "midnight" is the default */
+:root[data-theme="midnight"]{--bg:#0b1220;--card:#121b2e;--ink:#eef2f8;--sub:#8a9bb5;--line:#22304a;--soft:#1a2640;
+  --yes:#22c58b;--yes-bg:#0f3327;--no:#ff5c8a;--no-bg:#3a1428;--brand:#eef2f8;--live:#ff5a5f;--shadow:none}
+:root[data-theme="blackred"]{--bg:#0a0a0a;--card:#151515;--ink:#f5f5f5;--sub:#9a9a9a;--line:#2a2a2a;--soft:#1f1f1f;
+  --yes:#ff3b3b;--yes-bg:#3a1212;--no:#c9c9c9;--no-bg:#2a2a2a;--brand:#f5f5f5;--live:#ff3b3b;--shadow:none}
+:root[data-theme="turf"]{--bg:#07150e;--card:#0e2418;--ink:#eef7f0;--sub:#8fb39b;--line:#1d3b2a;--soft:#143021;
+  --yes:#4ade80;--yes-bg:#123d24;--no:#fbbf24;--no-bg:#3b2f0e;--brand:#eef7f0;--live:#f87171;--shadow:none}
+:root[data-theme="slate"]{--bg:#1b1f24;--card:#252a31;--ink:#f1f3f5;--sub:#a0a8b3;--line:#363d47;--soft:#2e343c;
+  --yes:#3ddc97;--yes-bg:#1d3a2f;--no:#ff7a90;--no-bg:#40252c;--brand:#f1f3f5;--live:#ff6b6b;--shadow:none}
+:root[data-theme="graphite"]{--bg:#141517;--card:#1f2124;--ink:#f2f3f4;--sub:#9b9fa6;--line:#30333a;--soft:#292c31;
+  --yes:#34d399;--yes-bg:#173a2d;--no:#f87171;--no-bg:#3f2222;--brand:#f2f3f4;--live:#f87171;--shadow:none}
+:root[data-theme="steel"]{--bg:#161c23;--card:#1f2731;--ink:#eef3f8;--sub:#93a3b5;--line:#2e3a48;--soft:#26313d;
+  --yes:#38bdf8;--yes-bg:#123247;--no:#fb7185;--no-bg:#3d1f2a;--brand:#eef3f8;--live:#fb7185;--shadow:none}
+:root[data-theme="gunmetal"]{--bg:#1c1f22;--card:#272b2f;--ink:#f1f2f3;--sub:#a1a7ad;--line:#3a3f45;--soft:#30353a;
+  --yes:#a3e635;--yes-bg:#2c3a14;--no:#fb923c;--no-bg:#40291a;--brand:#f1f2f3;--live:#fb923c;--shadow:none}
+:root[data-theme="stone"]{--bg:#1d1b19;--card:#292624;--ink:#f4f1ee;--sub:#aaa39b;--line:#3b3733;--soft:#322e2b;
+  --yes:#2dd4bf;--yes-bg:#14372f;--no:#f472b6;--no-bg:#3d1f30;--brand:#f4f1ee;--live:#f87171;--shadow:none}
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme]:not([data-theme="light"]){color-scheme:dark}
+:root[data-theme]:not([data-theme="light"]) .mockbanner{background:#3a2f12;color:#ffd77a}
+:root[data-theme]:not([data-theme="light"]) .check.risky{background:#3a2f12;color:#ffd77a}
+#helpbtn{font-weight:800;color:var(--ink)}
+.themebtn{border:1px solid var(--line);background:var(--card);border-radius:999px;width:36px;height:36px;font-size:16px;flex:none}
+.themes{position:absolute;right:16px;top:58px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px;z-index:40;box-shadow:0 10px 30px rgba(0,0,0,.35);min-width:190px}
+.themes button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:9px 10px;border-radius:9px;font-weight:600;text-align:left}
+.themes button:hover,.themes button.on{background:var(--soft)}
+.themes i{width:18px;height:18px;border-radius:50%;flex:none;border:2px solid rgba(255,255,255,.25)}
+header{position:sticky}
+@media (prefers-color-scheme:dark){:root:not([data-theme]){
   --bg:#0c0f13; --card:#151a20; --ink:#eef1f4; --sub:#93a0ad; --line:#252c35; --soft:#1c222a;
   --yes:#2ed38f; --yes-bg:#123326; --no:#ff6b9a; --no-bg:#3a1424; --brand:#eef1f4; --shadow:none}}
 *{box-sizing:border-box}
@@ -77,6 +105,39 @@ h2:first-child{margin-top:4px}
 .mrow .lbl{min-width:0}
 .mrow .lbl small{display:block;color:var(--sub);font-size:12px}
 .chance{font-weight:800;font-size:17px;width:52px;text-align:right}
+.mtabs{display:flex;gap:18px;margin:16px 0 4px;overflow-x:auto;scrollbar-width:none}
+.mtabs button{border:0;background:none;padding:4px 0;font-weight:800;font-size:18px;color:var(--sub);white-space:nowrap;letter-spacing:-.01em}
+.mtabs button.on{color:var(--ink)}
+.acc{cursor:pointer;user-select:none}
+.chips2{display:flex;gap:8px;flex-wrap:wrap;padding:12px 14px 4px}
+.chips2 button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 14px;font-weight:600;font-size:13.5px}
+.chips2 button.on{background:var(--soft);border-color:var(--ink)}
+.dot.logo{background:none}
+.dot.logo img{width:100%;height:100%;object-fit:contain}
+.weekbar{display:flex;align-items:center;gap:8px;margin:4px 0 6px;flex-wrap:wrap}
+.weekbar>button:not(.sell){border:1px solid var(--line);background:var(--card);border-radius:10px;width:38px;height:38px;font-size:18px;font-weight:700}
+.weekbar>button:disabled{opacity:.35;cursor:default}
+.weekbar select{font:inherit;font-weight:700;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0;max-width:100%}
+.tour{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;display:grid;place-items:center;padding:16px}
+.tour[hidden]{display:none}
+.tourcard{position:relative;max-width:520px;width:100%;padding:24px 22px 18px;max-height:90vh;overflow:auto}
+.tourcard h3{margin:0 0 4px;font-size:22px;letter-spacing:-.01em}
+.tourcard .step{color:var(--sub);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.tourcard p{margin:10px 0;line-height:1.5}
+.tourcard ul{margin:8px 0;padding-left:20px;line-height:1.55}
+.tourcard .ex{background:var(--soft);border-radius:12px;padding:12px 14px;margin:12px 0;font-size:14px}
+.tourcard .ex b{color:var(--yes)}
+.tournav{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px}
+.dots{display:flex;gap:6px} .dots i{width:8px;height:8px;border-radius:50%;background:var(--line)} .dots i.on{background:var(--yes)}
+.ghostbtn{border:0;background:none;color:var(--sub);font-weight:700;padding:10px 14px;margin-right:4px}
+.tourx{position:absolute;right:10px;top:8px;border:0;background:none;font-size:24px;color:var(--sub);line-height:1;padding:6px}
+.mini{display:inline-block;border-radius:8px;padding:2px 8px;font-weight:700;font-size:13px}
+.mini.y{background:var(--yes-bg);color:var(--yes)} .mini.n{background:var(--no-bg);color:var(--no)}
+.ladder{display:flex;width:fit-content;align-items:center;gap:2px;border:1px solid var(--line);border-radius:8px;padding:2px;margin:6px 0 2px;max-width:100%;overflow-x:auto}
+.ladder button{border:0;background:none;padding:3px 8px;border-radius:6px;font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums}
+.ladder button.on{color:var(--ink);font-weight:800;background:var(--soft)}
+.ladder button:disabled{opacity:.3;cursor:default}
+.ln{color:var(--yes)}
 .more{border:0;background:none;color:var(--sub);font-weight:600;padding:10px 14px;width:100%;text-align:left}
 @media (max-width:520px){.mrow{grid-template-columns:1fr auto auto}.mrow .chance{grid-column:1;grid-row:2;text-align:left;width:auto;font-size:13px;color:var(--sub)}
  .yesbtn,.nobtn{min-width:64px;padding:8px}}
@@ -133,7 +194,7 @@ aside{position:relative}
  main{padding-bottom:70px}
 }
 @media (min-width:980px){.fab,.shade{display:none!important}}
-@media (max-width:640px){.bar{flex-wrap:wrap;gap:8px 12px;padding-bottom:6px}.logo{flex:1}nav{order:3;flex-basis:100%;margin:0 -4px}}
+@media (max-width:640px){.bar{flex-wrap:wrap;gap:8px 8px;padding-bottom:6px}.logo{flex:1;font-size:17px}nav{order:3;flex-basis:100%;margin:0 -4px}.bal small{display:none}.bal{padding:6px 10px}.themebtn{width:34px;height:34px}}
 /* bets & record */
 .bet{padding:14px;margin-bottom:10px}
 .bet .bh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
@@ -155,11 +216,17 @@ aside{position:relative}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 16px;border-radius:12px;font-weight:600;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:90vw}
 .updated{font-size:12px;color:var(--sub);margin-left:auto}
 .mockbanner{background:#fff4d6;color:#7a5600;text-align:center;font-size:13px;padding:6px;font-weight:600}
+.check{border-radius:12px;padding:10px 12px;margin:10px 0;font-size:13.5px}
+.check b{display:block;margin-bottom:4px;font-size:14px}
+.check.ok{background:var(--yes-bg)} .check.risky{background:#fff4d6;color:#6b4a00} .check.bad{background:var(--no-bg);color:var(--no)}
+@media (prefers-color-scheme:dark){.check.risky{background:#3a2f12;color:#ffd77a}}
+.check ul{margin:0;padding-left:18px} .check li{margin:3px 0}
 .danger{border:1px solid var(--line);background:var(--card);color:var(--no);border-radius:10px;padding:8px 14px;font-weight:700;margin-top:20px}
 </style>
 </head>
 <body>
 <div id="mock" class="mockbanner" hidden>Sample data mode — prices and scores are fake</div>
+<div id="netwarn" class="mockbanner" style="background:#fdecec;color:#9b1c1c" hidden></div>
 <header><div class="bar">
   <div class="logo">Steve's <span>Picks</span></div>
   <nav id="nav">
@@ -169,8 +236,14 @@ aside{position:relative}
     <button data-v="record">Record</button>
   </nav>
   <div class="bal num"><small>Paper</small><span id="bal">$—</span></div>
+  <button class="themebtn" id="helpbtn" title="How to use Steve's Picks">?</button>
+  <button class="themebtn" id="themebtn" title="Change theme">🎨</button>
 </div></header>
 
+<div class="themes" id="themes" hidden></div>
+<div class="tour" id="tour" hidden><div class="tourcard card" role="dialog" aria-modal="true" aria-labelledby="tourtitle"><div id="tourbody"></div>
+  <div class="tournav"><div class="dots" id="tourdots"></div><div><button class="ghostbtn" id="tourback">Back</button><button class="place" id="tournext" style="width:auto;padding:10px 20px">Next</button></div></div>
+  <button class="tourx" id="tourx" aria-label="Close">×</button></div></div>
 <div class="wrap">
   <main id="main"><div class="empty">Loading games…</div></main>
   <aside id="aside"><div class="card slip" id="slip"></div></aside>
@@ -179,18 +252,51 @@ aside{position:relative}
 <div class="shade" id="shade" hidden></div>
 
 <script>
+const THEMES=[["midnight","Midnight","#0b1220","#22c58b"],["blackred","Black & Red","#0a0a0a","#ff3b3b"],["turf","Turf","#07150e","#4ade80"],["slate","Slate","#1b1f24","#3ddc97"],["graphite","Graphite","#141517","#34d399"],["steel","Steel","#161c23","#38bdf8"],["gunmetal","Gunmetal","#1c1f22","#a3e635"],["stone","Stone","#1d1b19","#2dd4bf"],["light","Light","#f6f7f9","#00a86b"]];
+function setTheme(k){ document.documentElement.dataset.theme=k; try{localStorage.setItem("sp_theme",k)}catch(e){} }
+setTheme((()=>{try{return localStorage.getItem("sp_theme")}catch(e){return null}})()||"slate");
+const TOUR=[
+ {t:"Welcome to Steve's Picks 🏈", b:`<p>Bet on NFL games with <b>pretend money</b>. You start with <b>$5,000</b> in paper money. Nothing here is real money, so try anything.</p>
+   <p>The prices come straight from <b>Kalshi</b>, so your bets play out just like they would there. Scores and play-by-play come from <b>ESPN</b>.</p>
+   <p>This quick guide takes about a minute. You can open it again any time with the <b>?</b> button at the top.</p>`},
+ {t:"How to read a price", b:`<p>Every pick has a price in cents, like <span class="mini y">Yes 64¢</span>.</p>
+   <ul><li>The price is also the chance: <b>64¢ ≈ 64% chance</b> it happens.</li><li>If you're right, each contract pays <b>$1</b>. If you're wrong, it pays $0.</li><li><span class="mini n">No</span> is betting it <b>won't</b> happen.</li></ul>
+   <div class="ex">Example: Bills to win at 64¢. Bet $10 and, if the Bills win, you get back about <b>$15.40</b>. Lower prices pay more but hit less often.</div>`},
+ {t:"Finding games", b:`<ul><li><b>Games</b> shows live, upcoming and finished games. Use the <b>‹ Week ›</b> arrows or the dropdown to see past and future weeks.</li>
+   <li>Tap a game to see everything you can bet on:<br>• <b>Game Lines</b>: who wins, spread, total points<br>• <b>Player Props</b>: touchdowns, passing, receiving, rushing<br>• <b>Team Props</b> and more</li>
+   <li>For props, use the little <b>‹ 1+ 2+ 3+ ›</b> picker to change the line (like 1+ touchdown vs 2+).</li>
+   <li>The <b>Play-by-play</b> and <b>Box score</b> tabs follow the game live.</li></ul>`},
+ {t:"Placing a bet", b:`<ol style="padding-left:20px;line-height:1.6"><li>Tap a price. It goes into your <b>Bet slip</b> (on a phone, tap the black <b>Bet slip</b> button at the bottom).</li>
+   <li>Type how much to bet, or tap $5 / $10 / $25 / $50.</li><li>Check <b>Payout if right</b>, then tap <b>Place paper bet</b>.</li></ol>
+   <p><b>Parlay / combo:</b> add 2 or more picks before placing. All of them have to win, and it pays much more.</p>
+   <div class="ex"><b>Slip Check</b> looks at your slip before you bet. It warns you if a parlay can't hit (like both teams to win), goes against a bet you already have, or is a big long shot.</div>`},
+ {t:"This Week: picks with your friends", b:`<ul><li><b>Recommended</b> shows the likeliest picks right now, with their chance of winning. Tap <b>Add to slip</b> to use one.</li>
+   <li>The <b>pick sheet</b> lists every game's moneyline, spread and total on one page, handy for weekly picks with friends.</li></ul>
+   <p>"Recommended" means likeliest, not guaranteed. Favorites still lose sometimes.</p>`},
+ {t:"Tracking how you're doing", b:`<ul><li><b>My Bets</b>: open and settled bets. They settle by themselves when the game ends. Single bets can be <b>sold early</b> at the current price.</li>
+   <li><b>Record</b>: balance, profit/loss, win-loss, streak, and results <b>by week</b> and <b>by bet type</b>.</li>
+   <li>Low on money? On Record you can <b>add more paper money</b> or <b>reset to $5,000</b>.</li><li>Tap 🎨 to change the colors.</li></ul>
+   <p style="margin-bottom:0"><b>That's it, good luck! 🍀</b></p>`}];
+let tourStep=0;
+function showTour(i){ tourStep=Math.max(0,Math.min(TOUR.length-1,i)); const st=TOUR[tourStep];
+  $("#tourbody").innerHTML=`<div class="step">Step ${tourStep+1} of ${TOUR.length}</div><h3 id="tourtitle">${st.t}</h3>${st.b}`;
+  $("#tourdots").innerHTML=TOUR.map((_,k)=>`<i class="${k===tourStep?"on":""}"></i>`).join("");
+  $("#tourback").style.visibility=tourStep?"visible":"hidden"; $("#tournext").textContent=tourStep===TOUR.length-1?"Start betting":"Next";
+  $("#tour").hidden=false; }
+function closeTour(){ $("#tour").hidden=true; try{localStorage.setItem("sp_tour_done","1")}catch(e){} }
 const S = {view:"games", gameId:null, tab:"markets", games:null, week:null, detail:null,
-  slip:[], mode:"dollars", amount:"10", bets:null, rec:null, filter:"open", cfg:{}, open:{}, err:""};
+  slip:[], weekSel:"", curWeek:"", lines:{}, mtab:"lines", sec:{}, chip:{}, mode:"dollars", amount:"10", bets:null, rec:null, filter:"open", cfg:{}, open:{}, err:""};
 try{ S.slip = JSON.parse(localStorage.getItem("sp_slip")||"[]") }catch(e){}
 const $ = s => document.querySelector(s);
 const esc = s => String(s??"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const cents = p => p==null ? "—" : (Math.round(p*1000)/10).toString().replace(/\.0$/,"")+"¢";
-const usd = v => (v<0?"-":"")+"$"+Math.abs(+v||0).toFixed(2);
+const usd = v => (v<0?"-":"")+"$"+Math.abs(+v||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
 const pin = () => { try{return localStorage.getItem("sp_pin")||""}catch(e){return ""} };
 
 async function api(path, body){
   const opt = body ? {method:"POST", headers:{"Content-Type":"application/json","X-Pin":pin()}, body:JSON.stringify(body)} : {};
-  const r = await fetch(path, opt);
+  const ctl = new AbortController(); const to = setTimeout(()=>ctl.abort(), 20000); opt.signal = ctl.signal;
+  let r; try{ r = await fetch(path, opt) }catch(e){ throw new Error(e.name==="AbortError"?"timed out":"server not running (is the black window still open?)") } finally{ clearTimeout(to) }
   const j = await r.json().catch(()=>({error:"Bad response"}));
   if(r.status===401){ try{localStorage.removeItem("sp_pin")}catch(e){} }
   if(!r.ok) throw new Error(j.error||("Error "+r.status));
@@ -203,7 +309,10 @@ function kickoff(iso){
   const d=new Date(iso);
   return d.toLocaleString("en-US",{weekday:"short",month:"numeric",day:"numeric",hour:"numeric",minute:"2-digit",timeZone:"America/New_York"})+" ET";
 }
-function teamDot(t){ const c = t.color ? "#"+t.color : "#888"; return `<div class="dot" style="background:${c}">${esc(t.abbr||"")}</div>` }
+function teamDot(t){ const c = t.color ? "#"+t.color : "#888";
+  const badge=`<div class="dot" style="background:${c}">${esc(t.abbr||"")}</div>`;
+  if(!t.logo || !/^https:\/\//.test(t.logo)) return badge;
+  return `<div class="dot logo"><img src="${esc(t.logo)}" alt="${esc(t.abbr||"")}" loading="lazy" onerror="this.parentNode.outerHTML=this.parentNode.dataset.badge" ></div>`.replace('<div class="dot logo">',`<div class="dot logo" data-badge='${badge.replace(/'/g,"&#39;")}'>`) }
 function gameLabel(g){ return `${g.away.abbr} @ ${g.home.abbr}` }
 function inSlip(t,side){ return S.slip.some(l=>l.ticker===t && l.side===side) }
 
@@ -233,11 +342,21 @@ function gameCard(g){
     ${g.state==="in"&&g.situation&&g.situation.down?`<div class="sit">🏈 ${esc(g.situation.possession||"")} · ${esc(g.situation.down)}</div>`:""}
     <div class="gfoot"><span>${g.market_count? g.market_count+" markets":"No Kalshi markets yet"}</span><span>Open game ›</span></div></div>`;
 }
+function weekBar(){
+  const g=S.games; if(!g||!(g.weeks||[]).length) return "";
+  const ws=g.weeks, cur=S.weekSel||g.weekKey, i=ws.findIndex(w=>w.key===cur);
+  const prev=i>0?ws[i-1].key:"", next=i>=0&&i<ws.length-1?ws[i+1].key:"";
+  return `<div class="weekbar"><button data-week="${prev}" ${prev?"":"disabled"}>‹</button>
+    <select id="weeksel">${ws.map(w=>`<option value="${w.key}" ${w.key===cur?"selected":""}>${esc(w.label)}${w.key===S.curWeek?" (this week)":""}${w.dates?" · "+esc(w.dates):""}</option>`).join("")}</select>
+    <button data-week="${next}" ${next?"":"disabled"}>›</button>
+    ${S.weekSel&&S.weekSel!==S.curWeek?`<button class="sell" data-week="${S.curWeek||""}">This week</button>`:""}</div>`;
+}
 function viewGames(){
   if(!S.games) return `<div class="empty">Loading games…</div>`;
-  const gs=S.games.games||[]; if(!gs.length) return `<div class="empty">No games on the schedule right now.</div>`;
+  if(S.games.loadingWeek) return weekBar()+`<div class="empty">Loading week…</div>`;
+  const gs=S.games.games||[]; if(!gs.length) return weekBar()+`<div class="empty">${S.games.error?esc(S.games.error):"No games for this week."}</div>`;
   const sec=(title,arr)=>arr.length?`<h2>${title}</h2><div class="grid">${arr.map(gameCard).join("")}</div>`:"";
-  return sec("Live now",gs.filter(g=>g.state==="in"))+sec("Upcoming",gs.filter(g=>g.state==="pre"))+sec("Final",gs.filter(g=>g.state==="post"));
+  return weekBar()+sec("Live now",gs.filter(g=>g.state==="in"))+sec("Upcoming",gs.filter(g=>g.state==="pre"))+sec("Final",gs.filter(g=>g.state==="post"));
 }
 function viewWeek(){
   if(!S.games) return `<div class="empty">Loading…</div>`;
@@ -249,7 +368,7 @@ function viewWeek(){
       <div class="col">${(g.winner||[]).map(m=>btn(m,g)).join("")||'<span class="state">—</span>'}</div>
       <div class="col">${twoWay(g.spreads&&g.spreads[0],g,"spread")}</div>
       <div class="col">${twoWay(g.totals&&g.totals[0],g,"total")}</div></div>`).join("");
-  return viewRecs()+`<h2>Week ${esc(S.games.week??"")} pick sheet</h2>
+  return weekBar()+viewRecs()+`<h2>Week ${esc(S.games.week??"")} pick sheet</h2>
     <p class="state" style="margin:-4px 0 12px">Tap picks to add them to your slip. Bet them one at a time or combine them into a parlay.</p>
     <div class="card sheet"><div class="srow hdr"><div>Game</div><div>Moneyline</div><div>Spread</div><div>Total</div></div>${rows||'<div class="empty">No games left this week.</div>'}</div>`;
 }
@@ -259,7 +378,7 @@ function twoWay(m,g,kind){
   const n=(String(m.label).match(/(\d+(?:\.\d+)?)/)||[])[1]||"";
   let yes, no;
   if(kind==="total"){ yes=`Over ${n}`; no=`Under ${n}` }
-  else{ const fav=[g.away,g.home].find(t=>String(m.label).toLowerCase().startsWith(String(t.short||"").toLowerCase()))||g.away;
+  else{ const L=String(m.label).toLowerCase(); const fav=[g.away,g.home].find(t=>[t.short,t.name,(t.name||"").replace(/\s+\S+$/,"")].some(n=>n&&L.startsWith(String(n).toLowerCase())))||g.away;
         const dog=fav===g.away?g.home:g.away; yes=`${fav.short} -${n}`; no=`${dog.short} +${n}` }
   const b=(side,txt)=>{ const p=side==="yes"?m.yes_ask:m.no_ask; const cls="yesbtn";
     if(!p||p<=0||p>=1) return `<button class="${cls}" disabled style="opacity:.45"><span>${esc(txt)}</span><span>no price</span></button>`;
@@ -295,14 +414,80 @@ function viewGame(){
   if(S.tab==="pbp") return head+viewPbp(d);
   if(S.tab==="box") return head+viewBox(d);
   if(!d.markets.length) return head+`<div class="empty">Kalshi hasn't opened markets for this game yet.</div>`;
-  const groups={}; d.markets.forEach(m=>(groups[m.series]=groups[m.series]||[]).push(m));
-  return head+Object.entries(groups).map(([name,ms])=>{
-    const key=name, show=S.open[key]?ms:ms.slice(0,6);
-    const nice = /game$/i.test(name)||/winner/i.test(name) ? "Winner" : name;
-    return `<div class="card mgroup"><h3>${esc(nice)}<span>${ms.length} market${ms.length>1?"s":""}</span></h3>
-      ${show.map(m=>`<div class="mrow"><div class="lbl"><b>${esc(m.label)}</b><small>Vol ${Math.round(m.volume).toLocaleString()}</small></div>
-        <div class="chance num">${m.chance!=null?m.chance+"%":"—"}</div>${g.state==="post"?"":pickBtn(m,"yes",g)+pickBtn(m,"no",g)}</div>`).join("")}
-      ${ms.length>6?`<button class="more" data-more="${esc(key)}">${S.open[key]?"Show less":"Show all "+ms.length}</button>`:""}</div>`}).join("");
+  const groups={}; d.markets.forEach(m=>{ const name=m.series_ticker==="KXNFLGAME"?"Winner":cleanSeries(m.series); (groups[name]=groups[name]||[]).push(m) });
+  const cats={lines:[],player:[],team:[],game:[]};
+  Object.keys(groups).forEach(n=>cats[category(n)].push(n));
+  const tabs=[["lines","Game Lines"],["player","Player Props"],["team","Team Props"],["game","Game Props"]].filter(([k])=>cats[k].length);
+  if(!tabs.some(([k])=>k===S.mtab)) S.mtab=tabs.length?tabs[0][0]:"lines";
+  const bar=`<div class="mtabs">${tabs.map(([k,t])=>`<button data-mtab="${k}" class="${S.mtab===k?"on":""}">${t}</button>`).join("")}</div>`;
+  let body="";
+  if(S.mtab==="lines"){
+    const main=cats.lines.filter(n=>!/half|quarter|overtime/i.test(n)).sort((a,b)=>seriesRank(a)-seriesRank(b));
+    const periods=cats.lines.filter(n=>/half|quarter|overtime/i.test(n)).sort(periodSort);
+    body=main.map(n=>groupCard(n,groups[n],g)).join("")+(periods.length?section("Halves & quarters",periods,groups,g,false):"");
+  } else if(S.mtab==="player"){
+    const secs=[["Touchdowns",/^touchdowns|first touchdown|anytime/i],["Passing",/passing/i],["Receiving",/receiving|reception|longest/i],["Rushing",/rushing/i],["Other",/./]];
+    const used=new Set(); let first=true;
+    body=secs.map(([title,re])=>{ const ns=cats.player.filter(n=>!used.has(n)&&re.test(n)).sort((a,b)=>chipRank(a)-chipRank(b)||a.localeCompare(b)); ns.forEach(n=>used.add(n));
+      if(!ns.length) return ""; const h=section(title,ns,groups,g,first); first=false; return h }).join("");
+  } else {
+    body=cats[S.mtab].sort((a,b)=>a.localeCompare(b)).map(n=>groupCard(n,groups[n],g)).join("");
+  }
+  return head+bar+body;
+}
+function category(n){ const s=n.toLowerCase();
+  if(s==="winner"||/^spread$|^total points$|^total$|margin|half|quarter|overtime/.test(s)) return "lines";
+  if(/team/.test(s)) return "team";
+  if(/d\/st/.test(s)) return "game";
+  if(/touchdown|passing|rushing|receiving|reception|fantasy|longest|escalator/.test(s)) return "player";
+  return "game" }
+function chipRank(n){ const s=n.toLowerCase(); if(/^touchdowns/.test(s)) return 0; if(/first touchdown/.test(s)) return 1;
+  if(/yards$/.test(s)&&!/most|longest/.test(s)) return 0; if(/escalator/.test(s)) return 5; return 2 }
+function periodSort(a,b){ const r=n=>{const s=n.toLowerCase(); const q=s.match(/(1st|2nd|3rd|4th)/); return (/half/.test(s)?0:/quarter/.test(s)?10:20)+(q?parseInt(q[1]):0)}; return r(a)-r(b)||a.localeCompare(b) }
+function groupCard(name,ms,g){
+  const rows=ladderRows(ms), key=name, show=S.open[key]?rows:rows.slice(0,8);
+  return `<div class="card mgroup"><h3>${esc(name)}<span>${rows.length} ${rows.length>1?"options":"option"}</span></h3>
+    ${show.map(r=>rowHtml(r,g)).join("")}
+    ${rows.length>8?`<button class="more" data-more="${esc(key)}">${S.open[key]?"Show less":"Show more ("+rows.length+")"}</button>`:""}</div>`;
+}
+function section(title,names,groups,g,openDefault){
+  const isOpen = S.sec[title]==null ? openDefault : S.sec[title];
+  const chip = names.includes(S.chip[title]) ? S.chip[title] : names[0];
+  const chips = names.length>1 ? `<div class="chips2">${names.map(n=>`<button data-chip2="${esc(n)}" data-sec="${esc(title)}" class="${n===chip?"on":""}">${esc(chipName(n,title))}</button>`).join("")}</div>` : "";
+  const rows=isOpen?ladderRows(groups[chip]):[], key=title+"|"+chip, show=S.open[key]?rows:rows.slice(0,8);
+  return `<div class="card mgroup"><h3 class="acc" data-sec-toggle="${esc(title)}" data-open="${isOpen?1:0}">${esc(title)}<span>${isOpen?"▲":"▼"}</span></h3>
+    ${isOpen?`${chips}${show.map(r=>rowHtml(r,g)).join("")}${rows.length>8?`<button class="more" data-more="${esc(key)}">${S.open[key]?"Show less":"Show more ("+rows.length+")"}</button>`:""}`:""}</div>`;
+}
+function chipName(n,sec){ if(/^touchdowns/i.test(n)) return "Anytime TD"; if(/first touchdown/i.test(n)) return "First TD";
+  return n.replace(/^player\s+/i,"").replace(new RegExp("^"+sec+"\\s+","i"),"").replace(/^./,c=>c.toUpperCase()) }
+function cleanSeries(n){ n=String(n||"").replace(/^pro football\s+/i,"").replace(/\s+/g," ").trim(); return n.charAt(0).toUpperCase()+n.slice(1) }
+function seriesRank(n){ const s=n.toLowerCase();
+  if(s==="winner") return 0; if(/half|quarter|overtime/.test(s)) return 9;
+  if(s==="spread") return 1; if(s==="total points"||s==="total") return 2; if(/team total/.test(s)) return 3;
+  if(/^touchdowns|anytime|first touchdown/.test(s)) return 4;
+  if(/passing|rushing|receiving|reception|fantasy|longest/.test(s)) return 5; if(/margin/.test(s)) return 7; return 6 }
+// Turn "Buffalo wins by over 2.5 / 3.5 / 4.5" into one row with a line picker, like Kalshi
+function ladderRows(ms){
+  const rows=new Map();
+  ms.forEach(m=>{ const mm=String(m.label).match(/(\d+(?:\.\d+)?)/);
+    const tpl=mm?String(m.label).replace(mm[1],"{n}"):m.label+"#"+m.ticker;
+    const r=rows.get(tpl)||{tpl, key:m.series_ticker+"|"+tpl, items:[], vol:0};
+    r.items.push({n:mm?parseFloat(mm[1]):null, m}); r.vol+=m.volume||0; rows.set(tpl,r) });
+  const out=[...rows.values()]; out.forEach(r=>r.items.sort((a,b)=>(a.n??0)-(b.n??0)));
+  return out.sort((a,b)=>b.vol-a.vol);
+}
+function rowIndex(r){
+  if(S.lines[r.key]!=null && r.items[S.lines[r.key]]) return S.lines[r.key];
+  let best=0, d=1e9; r.items.forEach((it,i)=>{ const c=it.m.chance; if(c!=null&&Math.abs(c-50)<d){d=Math.abs(c-50);best=i} }); return best;
+}
+function rowHtml(r,g){
+  const i=rowIndex(r), m=r.items[i].m, ladder=r.items.length>1;
+  const label = ladder ? esc(r.tpl).replace("{n}",`<span class="ln">${esc(String(r.items[i].n))}</span>`) : esc(m.label);
+  let picker="";
+  if(ladder){ const lo=Math.max(0,Math.min(i-2,r.items.length-5)), win=r.items.slice(lo,lo+5);
+    picker=`<div class="ladder"><button data-step="-1" data-row="${esc(r.key)}" data-cur="${i}" ${i===0?"disabled":""}>‹</button>${win.map((it,k)=>`<button data-pickline="${lo+k}" data-row="${esc(r.key)}" class="${lo+k===i?"on":""}">${esc(String(it.n))}</button>`).join("")}<button data-step="1" data-row="${esc(r.key)}" data-cur="${i}" ${i===r.items.length-1?"disabled":""}>›</button></div>` }
+  return `<div class="mrow"><div class="lbl"><b>${label}</b>${picker}<small>Vol ${Math.round(m.volume).toLocaleString()}</small></div>
+    <div class="chance num">${m.chance!=null?m.chance+"%":"—"}</div>${g.state==="post"?"":pickBtn(m,"yes",g)+pickBtn(m,"no",g)}</div>`;
 }
 function viewPbp(d){
   if(!d.drives.length) return `<div class="empty">Play-by-play starts at kickoff.</div>`;
@@ -346,7 +531,11 @@ function viewRecord(){
     ${spark(r)}
     <h2>By week</h2>${r.weeks.length?tbl(r.weeks.map(w=>["Week "+w.week,w]),"Week"):'<div class="card empty">Weekly results show up after the first bets settle.</div>'}
     <h2>By bet type</h2>${tbl(Object.entries(r.types),"Type")}
-    <button class="danger" id="reset">Reset paper account</button>`;
+    <h2>Paper money</h2>
+    <div class="card" style="padding:14px">
+      <div class="state" style="margin-bottom:10px">Running low? Add more play money (it isn't counted as profit), or start over.</div>
+      <div class="chips" style="margin:0 0 10px">${[500,1000,2500,5000].map(v=>`<button data-addfunds="${v}">+ $${v.toLocaleString()}</button>`).join("")}</div>
+      <button class="danger" id="reset" style="margin-top:0">Reset to $5,000 and erase all bets</button></div>`;
 }
 function spark(r){
   const pts=[[0,r.start],...r.equity]; if(pts.length<3) return "";
@@ -367,6 +556,15 @@ function slipCalc(){
   const f=fee(c), cost=c*price+f;
   return {price, contracts:c, fee:f, cost, payout:c, profit:c-cost};
 }
+let checkTimer=null;
+function checkBox(){
+  const k=JSON.stringify(S.slip.map(l=>[l.ticker,l.side]));
+  if(k!==S.checkKey){ S.checkKey=k; S.check=null; clearTimeout(checkTimer);
+    checkTimer=setTimeout(async()=>{ try{ const r=await api("/api/check",{legs:S.slip}); if(S.checkKey===k){ S.check=r; renderSlip() } }catch(e){} },250) }
+  const r=S.check; if(!r) return `<div class="check ok" style="opacity:.6"><b>Slip Check</b>Checking your picks…</div>`;
+  const head={ok:"✅ Slip Check: looks fine",risky:"⚠️ Slip Check: risky",bad:"⛔ Slip Check: not a good idea"}[r.verdict]||"Slip Check";
+  return `<div class="check ${r.verdict}"><b>${head}</b>${r.warnings.length?`<ul>${r.warnings.map(w=>`<li>${esc(w.text)}</li>`).join("")}</ul>`:"No conflicts with each other or with your open bets."}</div>`;
+}
 function renderSlip(){
   const n=S.slip.length, c=slipCalc();
   const fab=$("#fab"); fab.hidden=!n; fab.textContent=`Bet slip · ${n}${c&&c.payout?" · pays "+usd(c.payout):""}`;
@@ -383,6 +581,7 @@ function renderSlip(){
       <div><span>Total cost</span><span>${usd(c.cost)}</span></div>
       <div><span>Payout if right</span><span class="win">${usd(c.payout)}</span></div>
       <div><span>Profit</span><span class="pos">${usd(c.profit)}</span></div></div>`:""}
+    ${checkBox()}
     <button class="place" id="place" ${c&&c.contracts?"":"disabled"}>Place paper bet</button>
     ${S.err?`<div class="err">${esc(S.err)}</div>`:""}
     <div class="note">${n>1?"Combo price multiplies the legs. Kalshi's own combo quote can differ a little, especially for picks in the same game.":"Each contract pays $1 if you're right. Price updates to the live Kalshi ask when you place it."}</div>`;
@@ -397,6 +596,7 @@ function togglePick(p){
 }
 async function placeBet(){
   const c=slipCalc(); if(!c||!c.contracts) return;
+  if(S.check&&S.check.verdict==="bad"&&!confirm("Slip Check says this isn't a good idea:\n\n"+S.check.warnings.filter(w=>w.level==="stop").map(w=>"• "+w.text).join("\n")+"\n\nPlace it anyway?")) return;
   if(S.cfg.pin && !pin()){ const v=prompt("Enter PIN to place bets"); if(!v) return; try{localStorage.setItem("sp_pin",v)}catch(e){} }
   $("#place").disabled=true;
   try{
@@ -413,9 +613,20 @@ function render(){
   $("#main").innerHTML = v==="games"?viewGames(): v==="week"?viewWeek(): v==="game"?viewGame(): v==="bets"?viewBets(): viewRecord();
   renderSlip();
 }
-async function loadGames(){ try{ S.games=await api("/api/games") }catch(e){ if(!S.games) $("#main").innerHTML=`<div class="empty">Couldn't load games: ${esc(e.message)}</div>` } if(S.view==="games"||S.view==="week") render() }
+async function loadGames(){
+  const want=S.weekSel;
+  try{ const r=await api("/api/games"+(want?"?week="+encodeURIComponent(want):"")); if(S.weekSel!==want) return; S.games=r; if(!S.curWeek&&!want) S.curWeek=r.weekKey }
+  catch(e){ if(!S.games) S.games={games:[],week:null,error:"Couldn't reach the Steve's Picks server: "+e.message} }
+  showStatus(S.games&&S.games.status, S.games&&S.games.error);
+  if(S.view==="games"||S.view==="week") render() }
+function showStatus(st, err){
+  const msgs=[]; if(err) msgs.push(err);
+  if(st){ if(st.espn&&st.espn.ok===false) msgs.push("Scores: "+st.espn.msg);
+          if(st.kalshi&&st.kalshi.ok===false) msgs.push("Prices: "+st.kalshi.msg+". If this is a work computer, the network may block Kalshi — try it at home or once it's on Railway.") }
+  const w=$("#netwarn"); w.hidden=!msgs.length; w.textContent=msgs.join("  •  ");
+}
 async function loadGame(){ if(!S.gameId) return; try{ const d=await api("/api/game/"+S.gameId); if(S.view==="game"&&d.game.id==S.gameId){ S.detail=d; const y=scrollY; render(); scrollTo(0,y) } }catch(e){} }
-async function loadBets(){ try{ S.bets=await api("/api/bets"); $("#bal").textContent=usd(S.bets.bank) }catch(e){} if(S.view==="bets") render() }
+async function loadBets(){ try{ S.bets=await api("/api/bets"); $("#bal").textContent=usd(S.bets.bank) }catch(e){ S.bets=S.bets||{bank:0,bets:[]}; $("#bal").textContent="offline" } if(S.view==="bets") render() }
 async function loadRecs(){ try{ S.recs=await api("/api/recs") }catch(e){ S.recs={picks:[]} } if(S.view==="week") render() }
 async function loadRec(){ try{ S.rec=await api("/api/record") }catch(e){} if(S.view==="record") render() }
 function refreshBank(){ loadBets(); loadRec() }
@@ -427,12 +638,24 @@ function go(view, id){
 }
 
 document.addEventListener("click",e=>{
-  const t=e.target.closest("button,[data-game]"); if(!t) return;
+  const t=e.target.closest("button,[data-game],[data-sec-toggle]"); if(!t) return;
+  if(t.dataset.secToggle){ S.sec[t.dataset.secToggle]=t.dataset.open!=="1"; const y=scrollY; render(); scrollTo(0,y); return }
   if(t.dataset.pick){ e.stopPropagation(); return togglePick(JSON.parse(t.dataset.pick)) }
   if(t.dataset.v) return go(t.dataset.v);
   if(t.dataset.nav) return go(t.dataset.nav);
   if(t.dataset.game) return go("game", t.dataset.game);
   if(t.dataset.tab){ S.tab=t.dataset.tab; return render() }
+  if(t.id==="helpbtn") return showTour(0);
+  if(t.id==="tournext") return tourStep===TOUR.length-1?closeTour():showTour(tourStep+1);
+  if(t.id==="tourback") return showTour(tourStep-1);
+  if(t.id==="tourx") return closeTour();
+  if(t.id==="themebtn"){ const box=$("#themes"); const cur=document.documentElement.dataset.theme;
+    box.innerHTML=THEMES.map(([k,n,bg,ac])=>`<button data-theme-pick="${k}" class="${k===cur?"on":""}"><i style="background:linear-gradient(135deg,${bg} 50%,${ac} 50%)"></i>${n}</button>`).join(""); box.hidden=!box.hidden; return }
+  if(t.dataset.themePick){ setTheme(t.dataset.themePick); $("#themes").hidden=true; return }
+  if(t.dataset.mtab){ S.mtab=t.dataset.mtab; return render() }
+  if(t.dataset.chip2){ S.chip[t.dataset.sec]=t.dataset.chip2; const y=scrollY; render(); scrollTo(0,y); return }
+  if(t.dataset.pickline){ S.lines[t.dataset.row]=+t.dataset.pickline; const y=scrollY; render(); scrollTo(0,y); return }
+  if(t.dataset.step){ S.lines[t.dataset.row]=+t.dataset.cur + +t.dataset.step; const y=scrollY; render(); scrollTo(0,y); return }
   if(t.dataset.more){ S.open[t.dataset.more]=!S.open[t.dataset.more]; return render() }
   if(t.dataset.rec){ const p=S.recs.picks[+t.dataset.rec]; S.slip=p.legs.map(l=>({ticker:l.ticker,side:l.side,label:l.label,series:l.series,game:l.game,price:l.price})); S.err=""; saveSlip(); render(); if(innerWidth<980){$("#aside").classList.add("open");$("#shade").hidden=false} return }
   if(t.dataset.filter){ S.filter=t.dataset.filter; return render() }
@@ -444,8 +667,12 @@ document.addEventListener("click",e=>{
   if(t.id==="fab"){ $("#aside").classList.add("open"); $("#shade").hidden=false; return }
   if(t.dataset.sell){ if(!confirm("Sell this bet at the current price?")) return;
     api(`/api/bets/${t.dataset.sell}/sell`,{}).then(b=>{toast(`Sold · ${b.pnl>=0?"+":""}${usd(b.pnl)}`); refreshBank()}).catch(err=>toast(err.message)); return }
-  if(t.id==="reset"){ if(!confirm("Reset balance and erase all bets?")) return; api("/api/reset",{}).then(()=>{toast("Account reset"); refreshBank()}).catch(err=>toast(err.message)) }
+  if(t.dataset.week!==undefined){ S.weekSel=t.dataset.week===S.curWeek?"":t.dataset.week; S.games=Object.assign({},S.games,{loadingWeek:true}); render(); loadGames(); return }
+  if(t.dataset.addfunds){ if(!confirm(`Add $${(+t.dataset.addfunds).toLocaleString()} in paper money?`)) return;
+    api("/api/addfunds",{amount:+t.dataset.addfunds}).then(()=>{toast("Added $"+(+t.dataset.addfunds).toLocaleString()); refreshBank()}).catch(err=>toast(err.message)); return }
+  if(t.id==="reset"){ if(!confirm("Reset to $5,000 and erase all bets? This can't be undone.")) return; api("/api/reset",{amount:5000}).then(()=>{toast("Account reset"); refreshBank()}).catch(err=>toast(err.message)) }
 });
+document.addEventListener("change",e=>{ if(e.target.id==="weeksel"){ const v=e.target.value; S.weekSel=v===S.curWeek?"":v; S.games=Object.assign({},S.games,{loadingWeek:true}); render(); loadGames() } });
 $("#shade").onclick=()=>{ $("#aside").classList.remove("open"); $("#shade").hidden=true };
 
 addEventListener("hashchange",()=>{ const h=location.hash.slice(1); if(h.startsWith("game/")){ if(S.view!=="game"||S.gameId!==h.split("/")[1]) go("game",h.split("/")[1]) } else if(["games","week","bets","record"].includes(h)&&S.view!==h) go(h) });
@@ -454,6 +681,8 @@ addEventListener("hashchange",()=>{ const h=location.hash.slice(1); if(h.startsW
   const h=location.hash.slice(1);
   if(h.startsWith("game/")) go("game",h.split("/")[1]); else if(["week","bets","record"].includes(h)) go(h); else render();
   loadGames(); loadBets(); loadRec();
+  try{ if(!localStorage.getItem("sp_tour_done")) showTour(0) }catch(e){ showTour(0) }
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#tour").hidden) closeTour() });
   setInterval(loadGames, 15000);
   setInterval(()=>{ if(S.view==="week") loadRecs() }, 30000);
   setInterval(()=>{ if(S.view==="game") loadGame() }, 8000);

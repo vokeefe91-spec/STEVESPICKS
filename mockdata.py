@@ -22,7 +22,7 @@ def comp(g):
         n, s, col = TEAMS[abbr]
         return {"homeAway": "home" if home else "away", "score": str(score),
                 "team": {"abbreviation": abbr, "displayName": n, "shortDisplayName": s, "color": col,
-                         "logo": ""}, "records": [{"summary": "6-3"}],
+                         "logo": "https://a.espncdn.com/i/teamlogos/nfl/500/%s.png" % abbr.lower()}, "records": [{"summary": "6-3"}],
                 "linescores": [{"displayValue": "7"}, {"displayValue": "10"}, {"displayValue": "0"}] if state == "in" else []}
     st = {"in": {"state": "in", "shortDetail": "3rd 8:42"}, "pre": {"state": "pre", "shortDetail": "Thu 8:15 PM"}}[state]
     return {"competitors": [c(h, True, sh), c(a, False, sa)], "status": {"type": st, "displayClock": "8:42", "period": 3},
@@ -30,8 +30,13 @@ def comp(g):
             "situation": {"shortDownDistanceText": "2nd & 7 at MIN 34", "possession": "BUF", "isRedZone": False,
                           "lastPlay": {"text": "J.Allen scrambles right for 9 yards"}} if state == "in" else None}
 
-def scoreboard():
-    return {"week": {"number": 10}, "season": {"year": 2026},
+def scoreboard(week=None):
+    wk = int(week or 10)
+    cal = [{"value": "2", "label": "Regular Season", "entries": [{"value": str(i), "label": "Week %d" % i, "detail": "Wk %d dates" % i} for i in range(1, 19)]}]
+    if wk != 10:
+        return {"week": {"number": wk}, "season": {"year": 2026, "type": 2}, "leagues": [{"calendar": cal}], "events": [
+            {"id": "5%02d" % wk, "date": "2026-11-20T18:00Z", "name": "Sample", "competitions": [dict(comp(GAMES[3]), status={"type": {"state": "post" if wk < 10 else "pre", "shortDetail": "Final" if wk < 10 else "Sun 1:00 PM"}})]}]}
+    return {"week": {"number": 10}, "season": {"year": 2026, "type": 2}, "leagues": [{"calendar": cal}],
             "events": [{"id": g[0], "date": g[5], "name": "%s at %s" % (TEAMS[g[1]][0], TEAMS[g[2]][0]),
                         "competitions": [comp(g)]} for g in GAMES]}
 
@@ -72,10 +77,21 @@ def series_markets(series):
         if series == "KXNFLGAME":
             out += [mk(ev + "-" + ka, ev, p, an), mk(ev + "-" + kh, ev, 1 - p, hn)]
         elif series == "KXNFLSPREAD":
-            out += [mk(ev + "-%s3" % ka, ev, p - 0.12, "%s wins by over 2.5 points" % an),
-                    mk(ev + "-%s7" % ka, ev, p - 0.28, "%s wins by over 6.5 points" % an)]
+            out += [mk(ev + "-%s%d" % (ka, n), ev, p - 0.05 - k * 0.08, "%s wins by over %s points" % (an, n + 0.5)) for k, n in enumerate([1, 2, 3, 4, 6])]
         elif series == "KXNFLTOTAL":
             out += [mk(ev + "-44", ev, 0.55, "Over 43.5 points scored"), mk(ev + "-48", ev, 0.41, "Over 47.5 points scored")]
+        elif series == "KXNFLTD" and a == "BUF":
+            for nm, ps in [("Josh Allen", (0.52, 0.14)), ("James Cook III", (0.47, 0.12)), ("Justin Jefferson", (0.38, 0.08)), ("T.J. Hockenson", (0.29, 0.05, 0.01))]:
+                for i, pp in enumerate(ps):
+                    out.append(mk(ev + "-%s%d" % (nm[:4].upper().replace(" ", ""), i + 1), ev, pp, "%s: %d+" % (nm, i + 1)))
+        elif series == "KXNFLREC" and a == "BUF":
+            for nm, base in [("Justin Jefferson", 4), ("Khalil Shakir", 2), ("DJ Moore", 2)]:
+                for i in range(4):
+                    out.append(mk(ev + "-%s%d" % (nm[:3].upper(), base + i), ev, 0.8 - i * 0.2, "%s: %d+" % (nm, base + i)))
+        elif series == "KXNFL1QWIN":
+            out += [mk(ev + "-1Q" + ka, ev, 0.42, an), mk(ev + "-1Q" + kh, ev, 0.38, hn), mk(ev + "-1QT", ev, 0.2, "Tie")]
+        elif series == "KXNFLTEAMTOTAL":
+            out += [mk(ev + "-TT%s%d" % (ka, n), ev, 0.9 - k * 0.2, "%s over %s points" % (an, n)) for k, n in enumerate([13.5, 17.5, 20.5, 24.5])]
         elif series == "KXNFLRSHYDS" and a == "BUF":
             out += [mk(ev + "-JALLEN25", ev, 0.64, "Josh Allen: 25+ rushing yards"),
                     mk(ev + "-JALLEN50", ev, 0.22, "Josh Allen: 50+ rushing yards")]
@@ -88,18 +104,21 @@ def fetch(url):
     u = urlparse(url)
     q = {k: v[0] for k, v in parse_qs(u.query).items()}
     if u.path.endswith("/scoreboard"):
-        return scoreboard()
+        return scoreboard(q.get("week"))
     if u.path.endswith("/summary"):
         return summary(q["event"])
     if u.path.endswith("/series"):
         return {"series": [{"ticker": "KXNFLGAME", "title": "Pro Football Game"},
                            {"ticker": "KXNFLSPREAD", "title": "Spread"}, {"ticker": "KXNFLTOTAL", "title": "Total Points"},
-                           {"ticker": "KXNFLRSHYDS", "title": "Rushing Yards"}, {"ticker": "KXNFLANYTD", "title": "Anytime Touchdown"}]}
+                           {"ticker": "KXNFLRSHYDS", "title": "Rushing Yards"}, {"ticker": "KXNFLANYTD", "title": "Anytime Touchdown"},
+                           {"ticker": "KXNFLTD", "title": "Pro Football Touchdowns"}, {"ticker": "KXNFLREC", "title": "Pro Football Player Receptions"},
+                           {"ticker": "KXNFL1QWIN", "title": "Pro Football 1st Quarter Winner"}, {"ticker": "KXNFLTEAMTOTAL", "title": "Pro Football Team Total Points"},
+                           {"ticker": "KXNFLRECP", "title": "Receptions Protected"}]}
     if u.path.endswith("/markets"):
         if "series_ticker" in q:
             return {"markets": series_markets(q["series_ticker"]), "cursor": ""}
         if "tickers" in q:
             want = set(q["tickers"].split(","))
-            allm = [m for s in ("KXNFLGAME", "KXNFLSPREAD", "KXNFLTOTAL", "KXNFLRSHYDS", "KXNFLANYTD") for m in series_markets(s)]
+            allm = [m for s in ("KXNFLGAME", "KXNFLSPREAD", "KXNFLTOTAL", "KXNFLRSHYDS", "KXNFLANYTD", "KXNFLTD", "KXNFLREC", "KXNFL1QWIN", "KXNFLTEAMTOTAL") for m in series_markets(s)]
             return {"markets": [m for m in allm if m["ticker"] in want]}
     return {}

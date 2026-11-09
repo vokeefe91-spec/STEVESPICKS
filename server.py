@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 PORT = int(os.environ.get("PORT", "8080"))
 DATA_DIR = os.environ.get("DATA_DIR", os.path.join(os.path.dirname(os.path.abspath(__file__)), "data"))
 APP_PIN = os.environ.get("APP_PIN", "").strip()
-START_BANK = float(os.environ.get("START_BANK", "1000"))
+START_BANK = float(os.environ.get("START_BANK", "5000"))
 MOCK = os.environ.get("MOCK", "") == "1"
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -45,17 +45,26 @@ def get_json(url, ttl):
         data = mockdata.fetch(url)
     else:
         req = urllib.request.Request(url, headers=UA)
-        with urllib.request.urlopen(req, timeout=12) as r:
+        with urllib.request.urlopen(req, timeout=8) as r:
             data = json.loads(r.read().decode("utf-8"))
     with _cache_lock:
         _cache[url] = (now, data)
     return data
 
+STATUS = {"espn": {"ok": None, "msg": "not checked yet", "at": 0},
+          "kalshi": {"ok": None, "msg": "loading prices…", "at": 0}}
+
+def mark(src, ok, msg):
+    prev = STATUS[src].get("ok")
+    STATUS[src] = {"ok": ok, "msg": msg, "at": time.time()}
+    if prev != ok:
+        print("[%s] %s: %s" % (time.strftime("%H:%M:%S"), src.upper(), ("OK - " if ok else "PROBLEM - ") + msg), flush=True)
+
 def safe(fn, default):
     try:
         return fn()
     except Exception as e:
-        print("fetch error:", e)
+        print("fetch error:", e, flush=True)
         return default
 
 def money(x):
@@ -129,16 +138,39 @@ def all_nfl_markets():
     with ThreadPoolExecutor(max_workers=8) as ex:
         results = list(ex.map(lambda s: (s, safe(lambda: series_markets(s["ticker"]), [])), series))
     for s, mkts in results:
+        # Kalshi repeats some props as "Protected", "Precise" and "Escalator" versions; keep the main ones only
+        if re.search(r"protected|precise|escalator", s.get("title") or "", re.I):
+            continue
         for m in mkts:
             k = game_key(m.get("event_ticker"))
             if not k:
                 continue
-            cm = clean_market(m, s["title"])
+            title = re.sub(r"^Pro Football\s+", "", (s["title"] or "").replace("  ", " ")).strip()
+            cm = clean_market(m, title[:1].upper() + title[1:] if title else s["ticker"])
             cm["series_ticker"] = s["ticker"]
             if s["ticker"] == "KXNFLGAME":
                 cm["series"] = "Winner"
             groups.setdefault(k, []).append(cm)
     return groups
+
+_snapshot = {"groups": {}, "at": 0}
+
+def kalshi_loop():
+    while True:
+        try:
+            g = all_nfl_markets()
+            n = sum(len(v) for v in g.values())
+            if n:
+                _snapshot.update(groups=g, at=time.time())
+                mark("kalshi", True, "%d NFL markets across %d games" % (n, len(g)))
+            else:
+                mark("kalshi", False, "Kalshi answered but listed no open NFL markets (or it's blocked on this network)")
+        except Exception as e:
+            mark("kalshi", False, "can't reach Kalshi: %s" % e)
+        time.sleep(20)
+
+def snapshot():
+    return _snapshot["groups"]
 
 def markets_by_ticker(tickers):
     out = {}
@@ -174,17 +206,37 @@ def order_markets(mkts):
     return sorted(mkts, key=lambda m: (rank(m), m["series"], -(m["chance"] or 0)))
 
 # ---------------------------------------------------------------- ESPN
-def espn_scoreboard(week=None):
+def espn_scoreboard(week=None, stype=None, year=None):
     url = ESPN + "/scoreboard"
     if week:
-        url += "?" + urllib.parse.urlencode({"week": week, "seasontype": 2})
-    return get_json(url, 10)
+        q = {"week": week, "seasontype": stype or 2}
+        if year:
+            q["dates"] = year
+        url += "?" + urllib.parse.urlencode(q)
+    return get_json(url, 10 if not week else 30)
+
+def season_weeks(sb):
+    """Week list from ESPN's calendar: [{'key':'2-10','label':'Week 10','dates':'Nov 12-18'}]"""
+    out = []
+    for lg in sb.get("leagues") or []:
+        for part in lg.get("calendar") or []:
+            if not isinstance(part, dict):
+                continue
+            st = str(part.get("value") or "")
+            if st not in ("2", "3"):
+                continue
+            for e in part.get("entries") or []:
+                out.append({"key": "%s-%s" % (st, e.get("value")), "label": e.get("label") or ("Week " + str(e.get("value"))),
+                            "dates": e.get("detail") or "", "start": e.get("startDate")})
+    return out
+
+_weeks_cache = {"list": [], "year": None}
 
 def team_info(c):
     t = c.get("team", {})
     rec = (c.get("records") or [{}])[0].get("summary", "")
     return {"abbr": t.get("abbreviation"), "name": t.get("displayName"), "short": t.get("shortDisplayName") or t.get("name"),
-            "logo": t.get("logo"), "color": t.get("color"), "score": c.get("score"), "record": rec,
+            "logo": t.get("logo") or ((t.get("logos") or [{}])[0] or {}).get("href"), "color": t.get("color"), "score": c.get("score"), "record": rec,
             "home": c.get("homeAway") == "home"}
 
 def parse_event(ev):
@@ -206,9 +258,22 @@ def parse_event(ev):
                           "redzone": sit.get("isRedZone")} if sit else None}
 
 def games(week=None):
-    sb = safe(lambda: espn_scoreboard(week), {})
+    stype, wnum = None, None
+    if week and "-" in str(week):
+        stype, wnum = str(week).split("-", 1)
+    elif week:
+        wnum = week
+    try:
+        if not _weeks_cache["list"]:
+            cur = espn_scoreboard()
+            _weeks_cache.update(list=season_weeks(cur), year=(cur.get("season") or {}).get("year"))
+        sb = espn_scoreboard(wnum, stype, _weeks_cache["year"]) if wnum else espn_scoreboard()
+        mark("espn", True, "%d games on the schedule" % len(sb.get("events", [])))
+    except Exception as e:
+        sb = {}
+        mark("espn", False, "can't reach ESPN: %s" % e)
     evs = [parse_event(e) for e in sb.get("events", [])]
-    groups = safe(all_nfl_markets, {})
+    groups = snapshot()
     for g in evs:
         k = match_key(groups, g["away"].get("abbr", ""), g["home"].get("abbr", ""))
         mk = groups.get(k, []) if k else []
@@ -230,7 +295,11 @@ def games(week=None):
     order = {"in": 0, "pre": 1, "post": 2}
     evs.sort(key=lambda g: (order.get(g["state"], 3), g["date"] or ""))
     wk = (sb.get("week") or {}).get("number")
-    return {"week": wk, "season": (sb.get("season") or {}).get("year"), "games": evs, "updated": time.time()}
+    st = (sb.get("season") or {}).get("type") or 2
+    if not week and season_weeks(sb):
+        _weeks_cache.update(list=season_weeks(sb), year=(sb.get("season") or {}).get("year"))
+    return {"week": wk, "weekKey": "%s-%s" % (st, wk), "season": (sb.get("season") or {}).get("year"), "games": evs,
+            "weeks": _weeks_cache["list"], "updated": time.time(), "status": STATUS}
 
 def game_detail(eid):
     s = safe(lambda: get_json(ESPN + "/summary?" + urllib.parse.urlencode({"event": eid}), 8), {})
@@ -271,7 +340,7 @@ def game_detail(eid):
     for c in comp.get("competitors", []) or []:
         lines.append({"abbr": (c.get("team") or {}).get("abbreviation"),
                       "q": [l.get("displayValue") for l in (c.get("linescores") or [])]})
-    groups = safe(all_nfl_markets, {})
+    groups = snapshot()
     k = match_key(groups, g["away"].get("abbr", ""), g["home"].get("abbr", ""))
     mk = order_markets(groups.get(k, [])) if k else []
     return {"game": g, "drives": drives, "leaders": leaders, "scoring": scoring, "linescores": lines,
@@ -349,7 +418,11 @@ def kalshi_fee(contracts, price):
 def load_store():
     try:
         with open(BETS_FILE) as f:
-            return json.load(f)
+            st = json.load(f)
+        # accounts that were never used get the new starting balance
+        if not st.get("bets") and st.get("start") != START_BANK and not st.get("deposits"):
+            st.update(bank=START_BANK, start=START_BANK)
+        return st
     except Exception:
         return {"bank": START_BANK, "start": START_BANK, "bets": []}
 
@@ -365,6 +438,105 @@ def leg_price(m, side):
     if not p:
         p = m.get("last") if side == "yes" else (1 - m["last"] if m.get("last") else None)
     return p
+
+# ---------------------------------------------------------------- slip check
+def leg_info(ticker):
+    """Break a Kalshi ticker into what it bets on: series, game, team/number."""
+    parts = (ticker or "").split("-")
+    series = parts[0] if parts else ""
+    k = game_key(ticker)
+    suf = parts[-1] if len(parts) >= 3 else ""
+    m = re.match(r"^([A-Z]+)?(\d+(?:\.\d+)?)?$", suf)
+    team = (m.group(1) if m else None) or None
+    num = float(m.group(2)) if m and m.group(2) else None
+    kind = "win" if series == "KXNFLGAME" else "spread" if "SPREAD" in series else "total" if "TOTAL" in series else "prop"
+    return {"series": series, "game": k, "team": team, "num": num, "kind": kind}
+
+def same_team(a, b):
+    if not a or not b:
+        return False
+    for canon, al in ALIASES.items():
+        if a in al and b in al:
+            return True
+    return a == b
+
+def check_slip(legs):
+    """Plain-rule check of a slip. Returns warnings, worst first."""
+    out = []
+    def add(level, text):
+        out.append({"level": level, "text": text})
+    infos = [dict(l, **leg_info(l["ticker"])) for l in legs]
+    # 1) legs inside the slip that fight each other
+    for i in range(len(infos)):
+        for j in range(i + 1, len(infos)):
+            a, b = infos[i], infos[j]
+            if a["ticker"] == b["ticker"]:
+                if a["side"] != b["side"]:
+                    add("stop", "%s is in here as both Yes and No. One of them always loses." % a["label"])
+                continue
+            if not a["game"] or a["game"] != b["game"]:
+                continue
+            if a["kind"] == b["kind"] == "win":
+                ya = a["side"] == "yes"; yb = b["side"] == "yes"
+                if ya and yb:
+                    add("stop", "You picked both teams to win the same game. This combo can't hit.")
+                elif ya != yb:
+                    add("warn", "%s and %s are the same pick written two ways. It doesn't add anything." % (a["label"], b["label"]))
+            if {a["kind"], b["kind"]} == {"win", "spread"}:
+                w, sp = (a, b) if a["kind"] == "win" else (b, a)
+                w_team = w["team"]; sp_team = sp["team"]
+                if w["side"] == "yes" and sp["side"] == "yes" and sp_team and not same_team(w_team, sp_team):
+                    add("stop", "You have %s to win but the other team covering the spread. Those can't both happen." % w["label"])
+                if w["side"] == "yes" and sp["side"] == "no" and same_team(w_team, sp_team):
+                    add("warn", "%s to win but NOT cover only hits if they win by a small margin. That's a narrow window." % w["label"])
+            if a["kind"] == b["kind"] == "total" and a["num"] and b["num"]:
+                over = [x for x in (a, b) if x["side"] == "yes"]
+                under = [x for x in (a, b) if x["side"] == "no"]
+                if over and under and over[0]["num"] >= under[0]["num"]:
+                    add("stop", "Your Over and Under on the same game can't both hit.")
+    # 2) slip vs bets already open
+    st = load_store()
+    for b in st["bets"]:
+        if b["status"] != "open":
+            continue
+        for ol in b["legs"]:
+            oi = leg_info(ol["ticker"])
+            for l in infos:
+                if l["ticker"] == ol["ticker"] and l["side"] != ol["side"]:
+                    add("warn", "This goes against a bet you already have open (%s %s). If one wins, the other loses." % (ol["side"].upper(), ol["label"]))
+                elif l["kind"] == oi["kind"] == "win" and l["game"] and l["game"] == oi["game"] and l["ticker"] != ol["ticker"] and l["side"] == ol["side"] == "yes":
+                    add("warn", "You already have an open bet on the other team in this game (%s). You'd be betting against yourself." % ol["label"])
+                elif l["ticker"] == ol["ticker"] and l["side"] == ol["side"]:
+                    add("info", "You already have this pick open (%s). This doubles your risk on it." % ol["label"])
+    # 3) how likely the slip is
+    p = 1.0
+    for l in legs:
+        p *= max(min(float(l.get("price") or 0), 0.999), 0.001)
+    if len(legs) > 1:
+        games = [x["game"] for x in infos if x["game"]]
+        if len(games) != len(set(games)):
+            add("info", "Some legs are from the same game. They tend to move together, so Kalshi's real combo price can be different.")
+        if p < 0.05:
+            add("warn", "This combo hits about 1 time in %d. Fun for a few bucks, but expect it to lose." % round(1 / p))
+        elif p < 0.15:
+            add("info", "About a 1 in %d shot (%d%%). Keep the stake small." % (round(1 / p), round(p * 100)))
+        if len(legs) >= 6:
+            add("warn", "%d legs is a lot. Every extra leg is another way to lose; 3-4 strong legs usually hold up better." % len(legs))
+        weak = [x for x in legs if (x.get("price") or 1) < 0.35]
+        if weak and len(legs) > 1:
+            add("info", "%s is a long shot by itself (%d%%) and drags the whole combo down." % (weak[0]["label"], round(weak[0]["price"] * 100)))
+    else:
+        pr = float(legs[0].get("price") or 0)
+        if pr >= 0.9:
+            add("info", "Big favorite: you risk about $%.0f to win $1. One upset wipes out a lot of small wins." % (pr / (1 - pr)))
+    order = {"stop": 0, "warn": 1, "info": 2}
+    out.sort(key=lambda w: order[w["level"]])
+    seen, uniq = set(), []
+    for w in out:
+        if w["text"] not in seen:
+            seen.add(w["text"]); uniq.append(w)
+    verdict = "bad" if any(w["level"] == "stop" for w in uniq) else "risky" if any(w["level"] == "warn" for w in uniq) else "ok"
+    return {"verdict": verdict, "chance": round(p * 100, 1), "warnings": uniq}
 
 def place_bet(body):
     legs_in = body.get("legs") or []
@@ -548,6 +720,8 @@ class H(BaseHTTPRequestHandler):
             if u.path in ("/", "/index.html"):
                 with open(os.path.join(HERE, "index.html"), "rb") as f:
                     return self.send(200, f.read(), "text/html; charset=utf-8")
+            if u.path == "/api/status":
+                return self.send(200, STATUS)
             if u.path == "/api/config":
                 return self.send(200, {"pin": bool(APP_PIN), "mock": MOCK})
             if u.path == "/api/games":
@@ -576,6 +750,11 @@ class H(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(n) or b"{}")
         except Exception:
             body = {}
+        if u.path == "/api/check":
+            try:
+                return self.send(200, check_slip(body.get("legs") or []))
+            except Exception as e:
+                return self.send(200, {"verdict": "ok", "warnings": [], "error": str(e)})
         if not self.authed():
             return self.send(401, {"error": "Wrong PIN"})
         try:
@@ -584,10 +763,24 @@ class H(BaseHTTPRequestHandler):
             m = re.match(r"^/api/bets/(\w+)/sell$", u.path)
             if m:
                 return self.send(200, sell_bet(m.group(1)))
+            if u.path == "/api/check":
+                return self.send(200, check_slip(body.get("legs") or []))
             if u.path == "/api/reset":
+                amt = float(body.get("amount") or START_BANK)
                 with _store_lock:
-                    save_store({"bank": START_BANK, "start": START_BANK, "bets": []})
+                    save_store({"bank": amt, "start": amt, "bets": []})
                 return self.send(200, {"ok": True})
+            if u.path == "/api/addfunds":
+                amt = float(body.get("amount") or 0)
+                if amt <= 0 or amt > 1000000:
+                    raise ValueError("Pick an amount")
+                with _store_lock:
+                    st = load_store()
+                    st["bank"] = round(st["bank"] + amt, 2)
+                    st["start"] = round(st["start"] + amt, 2)  # added money isn't counted as profit
+                    st["deposits"] = round(st.get("deposits", 0) + amt, 2)
+                    save_store(st)
+                return self.send(200, {"ok": True, "bank": st["bank"]})
             if u.path == "/api/pin":
                 return self.send(200, {"ok": True})
             self.send(404, {"error": "not found"})
@@ -598,5 +791,7 @@ class H(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     threading.Thread(target=settler, daemon=True).start()
-    print("Steve's Picks running on http://localhost:%d%s" % (PORT, "  (MOCK data)" if MOCK else ""))
+    threading.Thread(target=kalshi_loop, daemon=True).start()
+    print("Steve's Picks running on http://localhost:%d%s" % (PORT, "  (MOCK data)" if MOCK else ""), flush=True)
+    print("Checking ESPN and Kalshi... status lines will appear below.", flush=True)
     ThreadingHTTPServer(("0.0.0.0", PORT), H).serve_forever()

@@ -14,7 +14,7 @@ No real money, no Kalshi account and no API key needed.
 
 ## Try it on your PC (Windows)
 1. Install Python 3 from python.org (tick "Add Python to PATH").
-2. Double-click **run.bat**. Your browser opens to http://localhost:8080
+2. Double-click **run.bat**. Your browser opens to http://localhost:8095
    - **run-sample-data.bat** runs with fake sample data, handy for a first look.
 
 ## Put it on Railway
@@ -23,7 +23,7 @@ No real money, no Kalshi account and no API key needed.
 3. **Keep the record between deploys**: add a **Volume** to the service mounted at `/data`, then add the variable `DATA_DIR=/data`. Without a volume, bets reset on every redeploy.
 4. Optional variables:
    - `APP_PIN=1234` makes the app ask for a PIN before placing bets, so only Steve can bet on his record
-   - `START_BANK=1000` sets the starting paper balance
+   - `START_BANK=5000` sets the starting paper balance (default 5000)
 5. Under **Settings → Networking**, click **Generate Domain** to get Steve's link.
 
 ## Notes
