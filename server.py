@@ -75,7 +75,7 @@ def mark(src, ok, msg):
 _pace = {"last": 0.0, "until": 0.0}
 _pace_lock = threading.Lock()
 
-def kalshi_pace(gap=0.25):
+def kalshi_pace(gap=0.15):
     """At most ~4 Kalshi requests a second, and pause after Kalshi says slow down."""
     with _pace_lock:
         now = time.time()
@@ -164,13 +164,13 @@ def clean_market(m, series_title):
 CORE = ("KXNFLGAME", "KXNFLSPREAD", "KXNFLTOTAL")
 _series_data = {}   # ticker -> (fetched_at, markets)
 
-def all_nfl_markets():
+def all_nfl_markets(core_only=False):
     """Returns {(date, teams): [market, ...]} for every open NFL market on Kalshi.
     Winner/spread/total refresh every loop; props every 3 minutes (Kalshi rate-limits heavy use)."""
     series = [x for x in nfl_series() if not re.search(r"protected|precise|escalator|margin", x.get("title") or "", re.I)]
     now = time.time()
-    due = [x for x in series if x["ticker"] in CORE or now - _series_data.get(x["ticker"], (0, None))[0] > 180]
-    with ThreadPoolExecutor(max_workers=2) as ex:
+    due = [x for x in series if x["ticker"] in CORE or (not core_only and now - _series_data.get(x["ticker"], (0, None))[0] > 180)]
+    with ThreadPoolExecutor(max_workers=3) as ex:
         for x, mk in ex.map(lambda x: (x, safe(lambda: series_markets(x["ticker"]), None)), due):
             if mk is not None:
                 _series_data[x["ticker"]] = (time.time(), mk)
@@ -203,6 +203,12 @@ def kalshi_loop():
             time.sleep(5)
             continue
         try:
+            if not _snapshot["groups"]:
+                # just started (or woke up): show winner/spread/total within seconds, props fill in after
+                g = all_nfl_markets(core_only=True)
+                if g:
+                    _snapshot.update(groups=g, at=time.time())
+                    mark("kalshi", True, "main lines loaded, props loading")
             g = all_nfl_markets()
             n = sum(len(v) for v in g.values())
             if n:
