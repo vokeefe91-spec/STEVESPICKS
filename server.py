@@ -44,9 +44,21 @@ def get_json(url, ttl):
         import mockdata
         data = mockdata.fetch(url)
     else:
-        req = urllib.request.Request(url, headers=UA)
-        with urllib.request.urlopen(req, timeout=8) as r:
-            data = json.loads(r.read().decode("utf-8"))
+        data = None
+        for attempt in range(3):
+            if url.startswith(KALSHI):
+                kalshi_pace()
+            try:
+                req = urllib.request.Request(url, headers=UA)
+                with urllib.request.urlopen(req, timeout=8) as r:
+                    data = json.loads(r.read().decode("utf-8"))
+                break
+            except urllib.error.HTTPError as e:
+                if e.code != 429 or attempt == 2:
+                    raise
+                wait = float(e.headers.get("Retry-After") or 0) or (2 + attempt * 3)
+                _pace["until"] = time.time() + wait   # everyone backs off together
+                time.sleep(wait)
     with _cache_lock:
         _cache[url] = (now, data)
     return data
@@ -60,11 +72,28 @@ def mark(src, ok, msg):
     if prev != ok:
         print("[%s] %s: %s" % (time.strftime("%H:%M:%S"), src.upper(), ("OK - " if ok else "PROBLEM - ") + msg), flush=True)
 
+_pace = {"last": 0.0, "until": 0.0}
+_pace_lock = threading.Lock()
+
+def kalshi_pace(gap=0.25):
+    """At most ~4 Kalshi requests a second, and pause after Kalshi says slow down."""
+    with _pace_lock:
+        now = time.time()
+        t = max(now, _pace["last"] + gap, _pace["until"])
+        _pace["last"] = t
+    if t > now:
+        time.sleep(t - now)
+
+_last_err = {"msg": "", "at": 0}
+
 def safe(fn, default):
     try:
         return fn()
     except Exception as e:
-        print("fetch error:", e, flush=True)
+        msg = str(e)
+        if msg != _last_err["msg"] or time.time() - _last_err["at"] > 120:   # don't flood the window
+            print("fetch error:", msg, flush=True)
+            _last_err.update(msg=msg, at=time.time())
         return default
 
 def money(x):
@@ -88,7 +117,7 @@ def series_markets(series_ticker):
         q = {"series_ticker": series_ticker, "status": "open", "limit": "1000"}
         if cursor:
             q["cursor"] = cursor
-        d = get_json(KALSHI + "/markets?" + urllib.parse.urlencode(q), 15)
+        d = get_json(KALSHI + "/markets?" + urllib.parse.urlencode(q), 25)
         out += d.get("markets", [])
         cursor = d.get("cursor") or ""
         if not cursor:
@@ -131,16 +160,22 @@ def clean_market(m, series_title):
             "tradable": bool((ya and 0 < ya < 1) or (na and 0 < na < 1)),
             "status": m.get("status"), "result": m.get("result") or ""}
 
+CORE = ("KXNFLGAME", "KXNFLSPREAD", "KXNFLTOTAL")
+_series_data = {}   # ticker -> (fetched_at, markets)
+
 def all_nfl_markets():
-    """Returns {(date, teams): [market, ...]} for every open NFL market on Kalshi."""
-    series = nfl_series()
+    """Returns {(date, teams): [market, ...]} for every open NFL market on Kalshi.
+    Winner/spread/total refresh every loop; props every 3 minutes (Kalshi rate-limits heavy use)."""
+    series = [x for x in nfl_series() if not re.search(r"protected|precise|escalator", x.get("title") or "", re.I)]
+    now = time.time()
+    due = [x for x in series if x["ticker"] in CORE or now - _series_data.get(x["ticker"], (0, None))[0] > 180]
+    with ThreadPoolExecutor(max_workers=2) as ex:
+        for x, mk in ex.map(lambda x: (x, safe(lambda: series_markets(x["ticker"]), None)), due):
+            if mk is not None:
+                _series_data[x["ticker"]] = (time.time(), mk)
+    results = [(x, _series_data.get(x["ticker"], (0, []))[1]) for x in series]
     groups = {}
-    with ThreadPoolExecutor(max_workers=8) as ex:
-        results = list(ex.map(lambda s: (s, safe(lambda: series_markets(s["ticker"]), [])), series))
     for s, mkts in results:
-        # Kalshi repeats some props as "Protected", "Precise" and "Escalator" versions; keep the main ones only
-        if re.search(r"protected|precise|escalator", s.get("title") or "", re.I):
-            continue
         for m in mkts:
             k = game_key(m.get("event_ticker"))
             if not k:
@@ -167,7 +202,7 @@ def kalshi_loop():
                 mark("kalshi", False, "Kalshi answered but listed no open NFL markets (or it's blocked on this network)")
         except Exception as e:
             mark("kalshi", False, "can't reach Kalshi: %s" % e)
-        time.sleep(20)
+        time.sleep(30)
 
 def snapshot():
     return _snapshot["groups"]
