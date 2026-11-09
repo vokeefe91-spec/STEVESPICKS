@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Steve's Picks</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#1b1f24">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Steve's Picks">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
@@ -35,7 +43,7 @@
 :root[data-theme]:not([data-theme="light"]) .check.risky{background:#3a2f12;color:#ffd77a}
 #helpbtn{font-weight:800;color:var(--ink)}
 .themebtn{border:1px solid var(--line);background:var(--card);border-radius:999px;width:36px;height:36px;font-size:16px;flex:none}
-.themes{position:absolute;right:16px;top:58px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px;z-index:40;box-shadow:0 10px 30px rgba(0,0,0,.35);min-width:190px}
+.themes{position:fixed;right:16px;top:calc(64px + env(safe-area-inset-top));background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px;z-index:40;box-shadow:0 10px 30px rgba(0,0,0,.35);min-width:190px}
 .themes button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:9px 10px;border-radius:9px;font-weight:600;text-align:left}
 .themes button:hover,.themes button.on{background:var(--soft)}
 .themes i{width:18px;height:18px;border-radius:50%;flex:none;border:2px solid rgba(255,255,255,.25)}
@@ -49,7 +57,22 @@ button{font:inherit;color:inherit;cursor:pointer}
 a{color:inherit}
 .num{font-variant-numeric:tabular-nums}
 /* top bar */
-header{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line)}
+header{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.logo{display:flex;align-items:center;gap:8px}
+.brandlogo{width:34px;height:34px;border-radius:9px;flex:none}
+.installbar{display:flex;align-items:center;gap:10px;margin:10px 16px 0;padding:10px 12px;border-radius:12px;background:var(--yes-bg);color:var(--ink);font-size:14px}
+.installbar[hidden]{display:none}
+.installbar span{flex:1}
+.ibx{border:0;background:none;color:var(--sub);font-size:20px;line-height:1;padding:2px 4px}
+@media (max-width:640px){#themebtn{display:none}}
+.weekbar select{flex:1}
+.installbtn{border:0;background:var(--yes);color:#06261a;font-weight:800;border-radius:999px;padding:8px 12px;font-size:13px;white-space:nowrap}
+.steps{counter-reset:s;list-style:none;padding:0;margin:10px 0}
+.steps li{counter-increment:s;position:relative;padding:8px 0 8px 40px;line-height:1.45}
+.steps li::before{content:counter(s);position:absolute;left:0;top:7px;width:28px;height:28px;border-radius:50%;background:var(--yes);color:#06261a;font-weight:800;display:grid;place-items:center;font-size:14px}
+.ostab{display:flex;gap:6px;margin:12px 0 4px} .ostab button{flex:1;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px;font-weight:700}
+.ostab button.on{background:var(--soft);border-color:var(--ink)}
+.kbd{display:inline-block;border:1px solid var(--line);background:var(--soft);border-radius:6px;padding:0 6px;font-weight:700}
 .bar{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:10px 16px}
 .logo{font-weight:800;font-size:19px;letter-spacing:-.02em;white-space:nowrap}
 .logo span{color:var(--yes)}
@@ -230,7 +253,7 @@ aside{position:relative}
 <div id="mock" class="mockbanner" hidden>Sample data mode — prices and scores are fake</div>
 <div id="netwarn" class="mockbanner" style="background:#fdecec;color:#9b1c1c" hidden></div>
 <header><div class="bar">
-  <div class="logo">Steve's <span>Picks</span></div>
+  <div class="logo"><img class="brandlogo" src="/logo.svg" alt="">Steve's <span>Picks</span></div>
   <nav id="nav">
     <button data-v="games" class="on">Games</button>
     <button data-v="week">This Week</button>
@@ -242,6 +265,7 @@ aside{position:relative}
   <button class="themebtn" id="themebtn" title="Change theme">🎨</button>
 </div></header>
 
+<div class="installbar" id="installbar" hidden><span>📲 Put <b>Steve's Picks</b> on your home screen</span><button class="installbtn" id="installbtn">Show me</button><button class="ibx" id="installx" aria-label="Hide">×</button></div>
 <div class="themes" id="themes" hidden></div>
 <div class="tour" id="tour" hidden><div class="tourcard card" role="dialog" aria-modal="true" aria-labelledby="tourtitle"><div id="tourbody"></div>
   <div class="tournav"><div class="dots" id="tourdots"></div><div><button class="ghostbtn" id="tourback">Back</button><button class="place" id="tournext" style="width:auto;padding:10px 20px">Next</button></div></div>
@@ -275,6 +299,8 @@ const TOUR=[
  {t:"This Week: picks with your friends", b:`<ul><li><b>Recommended</b> shows the likeliest picks right now, with their chance of winning. Tap <b>Add to slip</b> to use one.</li>
    <li>The <b>pick sheet</b> lists every game's moneyline, spread and total on one page, handy for weekly picks with friends.</li></ul>
    <p>"Recommended" means likeliest, not guaranteed. Favorites still lose sometimes.</p>`},
+ {t:"Put it on your phone 📲", b:`<p>Steve's Picks works like a regular app on your phone, with its own icon on the home screen.</p>
+   <p>On your phone, tap <b>Show me</b> in the green <b>📲</b> bar at the top, or the <b>📲 Install on phone</b> button on the Record page. It takes about 20 seconds and doesn't need the App Store.</p>`},
  {t:"Tracking how you're doing", b:`<ul><li><b>My Bets</b>: open and settled bets. They settle by themselves when the game ends. Single bets can be <b>sold early</b> at the current price.</li>
    <li><b>Record</b>: balance, profit/loss, win-loss, streak, and results <b>by week</b> and <b>by bet type</b>.</li>
    <li>Low on money? On Record you can <b>add more paper money</b> or <b>reset to $5,000</b>.</li><li>Tap 🎨 to change the colors.</li></ul>
@@ -286,6 +312,52 @@ function showTour(i){ tourStep=Math.max(0,Math.min(TOUR.length-1,i)); const st=T
   $("#tourback").style.visibility=tourStep?"visible":"hidden"; $("#tournext").textContent=tourStep===TOUR.length-1?"Start betting":"Next";
   $("#tour").hidden=false; }
 function closeTour(){ $("#tour").hidden=true; try{localStorage.setItem("sp_tour_done","1")}catch(e){} }
+/* ---------- phone app: install help, service worker, icons ---------- */
+let deferredInstall=null;
+const isStandalone=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const isPhone=()=>/android|iphone|ipad|ipod/i.test(navigator.userAgent)||isIOS();
+const installHidden=()=>{try{return localStorage.getItem("sp_install_hide")==="1"}catch(e){return false}};
+addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); deferredInstall=e; if(!isStandalone()&&!installHidden()) $("#installbar").hidden=false });
+function installSteps(os){
+  const ios=`<ol class="steps"><li>Open this page in <b>Safari</b> (the compass icon). If you opened the link from a text, tap <b>⋯</b> or the compass to open it in Safari.</li>
+    <li>Tap the <b>Share</b> button: the square with an arrow pointing up <span class="kbd">⬆︎</span> (bottom middle of the screen, or top right on iPad).</li>
+    <li>Scroll down and tap <b>Add to Home Screen</b> <span class="kbd">⊞</span>.</li>
+    <li>Leave the name as <b>Steve's Picks</b> and tap <b>Add</b> (top right).</li>
+    <li>Find the <b>SP shield icon</b> on your home screen and tap it. It opens full screen, like any other app.</li></ol>`;
+  const android=`<ol class="steps"><li>Open this page in <b>Chrome</b>.</li>
+    <li>${deferredInstall?`Tap the button below, then tap <b>Install</b>.`:`Tap the <b>⋮</b> menu (top right).`}</li>
+    ${deferredInstall?"":`<li>Tap <b>Add to Home screen</b> or <b>Install app</b>.</li><li>Tap <b>Install</b> (or <b>Add</b>) to confirm.</li>`}
+    <li>Find the <b>SP shield icon</b> on your home screen or in your apps, and tap it to open.</li></ol>
+    ${deferredInstall?`<button class="place" id="doinstall">Install Steve's Picks</button>`:""}`;
+  return os==="ios"?ios:android;
+}
+function showInstall(os){
+  os=os||(isIOS()?"ios":"android");
+  $("#tourbody").innerHTML=`<div class="step">Put it on your phone</div><h3 id="tourtitle">Get the Steve's Picks app</h3>
+    <div class="ostab"><button data-os="ios" class="${os==="ios"?"on":""}"> iPhone</button><button data-os="android" class="${os==="android"?"on":""}">Android</button></div>${installSteps(os)}
+    <p class="state" style="margin-top:12px">Your bets and record stay the same on the app and the website. It's all one account.</p>`;
+  $("#tourdots").innerHTML=""; $("#tourback").style.visibility="hidden"; $("#tournext").textContent="Got it"; tourStep=TOUR.length-1; $("#tour").hidden=false;
+}
+async function makeIcons(){
+  // draw the PNG icons phones need from the SP logo, once, and keep them on the server
+  try{
+    if((await fetch("/apple-touch-icon.png",{cache:"no-store"})).ok) return;
+    const img=new Image(); img.src="/logo.svg"; await img.decode();
+    for(const [name,size,pad] of [["icon-512.png",512,0],["icon-192.png",192,0],["apple-touch-icon.png",180,1]]){
+      const c=document.createElement("canvas"); c.width=c.height=size; const x=c.getContext("2d");
+      if(pad){ x.fillStyle="#1b1f24"; x.fillRect(0,0,size,size) }
+      x.drawImage(img,0,0,size,size);
+      const blob=await new Promise(r=>c.toBlob(r,"image/png"));
+      await fetch("/api/icon/"+name,{method:"POST",body:blob});
+    }
+  }catch(e){}
+}
+function setupApp(){
+  if("serviceWorker" in navigator){ navigator.serviceWorker.register("/sw.js").catch(()=>{}) }
+  if(isPhone()&&!isStandalone()&&!installHidden()) $("#installbar").hidden=false;
+  setTimeout(makeIcons,1500);
+}
 const S = {view:"games", gameId:null, tab:"markets", games:null, week:null, detail:null,
   slip:[], weekSel:"", curWeek:"", lines:{}, mtab:"lines", sec:{}, chip:{}, mode:"dollars", amount:"10", bets:null, rec:null, filter:"open", cfg:{}, open:{}, err:""};
 try{ S.slip = JSON.parse(localStorage.getItem("sp_slip")||"[]") }catch(e){}
@@ -322,7 +394,7 @@ function pickBtn(m, side, g, text){
   const p = side==="yes" ? m.yes_ask : m.no_ask;
   const cls = side==="yes" ? "yesbtn" : "nobtn";
   if(!p || p<=0 || p>=1) return `<button class="${cls}" disabled style="opacity:.45;cursor:default">${side==="yes"?"Yes":"No"} —</button>`;
-  return `<button class="${cls} ${inSlip(m.ticker,side)?"sel":""}" data-pick='${esc(JSON.stringify({ticker:m.ticker,side,label:m.team?m.label.replace(/^([^:]+)/,"$1 ("+m.team+")"):m.label,series:m.series,game:g?gameLabel(g):"",price:p}))}'>${text??(side==="yes"?"Yes ":"No ")+cents(p)}</button>`;
+  return `<button class="${cls} ${inSlip(m.ticker,side)?"sel":""}" data-pick='${esc(JSON.stringify({ticker:m.ticker,side,label:m.pteam?m.label.replace(/^([^:]+)/,"$1 ("+m.pteam+")"):m.label,series:m.series,game:g?gameLabel(g):"",price:p}))}'>${text??(side==="yes"?"Yes ":"No ")+cents(p)}</button>`;
 }
 
 // ---------------- views
@@ -488,7 +560,7 @@ function rowHtml(r,g){
   let picker="";
   if(ladder){ const lo=Math.max(0,Math.min(i-2,r.items.length-5)), win=r.items.slice(lo,lo+5);
     picker=`<div class="ladder"><button data-step="-1" data-row="${esc(r.key)}" data-cur="${i}" ${i===0?"disabled":""}>‹</button>${win.map((it,k)=>`<button data-pickline="${lo+k}" data-row="${esc(r.key)}" class="${lo+k===i?"on":""}">${esc(String(it.n))}</button>`).join("")}<button data-step="1" data-row="${esc(r.key)}" data-cur="${i}" ${i===r.items.length-1?"disabled":""}>›</button></div>` }
-  const tm = m.team ? [g.away,g.home].find(t=>t.abbr===m.team) : null;
+  const tm = m.pteam ? [g.away,g.home].find(t=>t.abbr===m.pteam) : null;
   const tag = tm ? `<span class="ptag">${teamDot(tm)}${esc(tm.abbr)}</span>` : "";
   return `<div class="mrow"><div class="lbl"><b>${tag}${label}</b>${picker}<small>Vol ${Math.round(m.volume).toLocaleString()}</small></div>
     <div class="chance num">${m.chance!=null?m.chance+"%":"—"}</div>${g.state==="post"?"":pickBtn(m,"yes",g)+pickBtn(m,"no",g)}</div>`;
@@ -539,7 +611,9 @@ function viewRecord(){
     <div class="card" style="padding:14px">
       <div class="state" style="margin-bottom:10px">Running low? Add more play money (it isn't counted as profit), or start over.</div>
       <div class="chips" style="margin:0 0 10px">${[500,1000,2500,5000].map(v=>`<button data-addfunds="${v}">+ $${v.toLocaleString()}</button>`).join("")}</div>
-      <button class="danger" id="reset" style="margin-top:0">Reset to $5,000 and erase all bets</button></div>`;
+      <button class="danger" id="reset" style="margin-top:0">Reset to $5,000 and erase all bets</button></div>
+    <h2>App</h2><div class="card" style="padding:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="sell" id="installbtn2">📲 Install on phone</button><button class="sell" id="themebtn2">🎨 Change colors</button><button class="sell" id="helpbtn2">? How it works</button></div>`;
 }
 function spark(r){
   const pts=[[0,r.start],...r.equity]; if(pts.length<3) return "";
@@ -650,6 +724,12 @@ document.addEventListener("click",e=>{
   if(t.dataset.game) return go("game", t.dataset.game);
   if(t.dataset.tab){ S.tab=t.dataset.tab; return render() }
   if(t.id==="helpbtn") return showTour(0);
+  if(t.id==="installbtn"||t.id==="installbtn2") return showInstall();
+  if(t.id==="helpbtn2") return showTour(0);
+  if(t.id==="installx"){ $("#installbar").hidden=true; try{localStorage.setItem("sp_install_hide","1")}catch(e){} return }
+  if(t.id==="themebtn2"){ $("#themebtn").click(); return }
+  if(t.dataset.os) return showInstall(t.dataset.os);
+  if(t.id==="doinstall"&&deferredInstall){ deferredInstall.prompt(); deferredInstall.userChoice.finally(()=>{deferredInstall=null; $("#installbar").hidden=true; closeTour()}); return }
   if(t.id==="tournext") return tourStep===TOUR.length-1?closeTour():showTour(tourStep+1);
   if(t.id==="tourback") return showTour(tourStep-1);
   if(t.id==="tourx") return closeTour();
@@ -686,6 +766,7 @@ addEventListener("hashchange",()=>{ const h=location.hash.slice(1); if(h.startsW
   if(h.startsWith("game/")) go("game",h.split("/")[1]); else if(["week","bets","record"].includes(h)) go(h); else render();
   loadGames(); loadBets(); loadRec();
   try{ if(!localStorage.getItem("sp_tour_done")) showTour(0) }catch(e){ showTour(0) }
+  setupApp();
   document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!$("#tour").hidden) closeTour() });
   setInterval(loadGames, 15000);
   setInterval(()=>{ if(S.view==="week") loadRecs() }, 30000);
