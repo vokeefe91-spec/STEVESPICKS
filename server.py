@@ -170,10 +170,18 @@ def all_nfl_markets(core_only=False):
     series = [x for x in nfl_series() if not re.search(r"protected|precise|escalator|margin", x.get("title") or "", re.I)]
     now = time.time()
     due = [x for x in series if x["ticker"] in CORE or (not core_only and now - _series_data.get(x["ticker"], (0, None))[0] > 180)]
+    t0 = time.time()
     with ThreadPoolExecutor(max_workers=3) as ex:
-        for x, mk in ex.map(lambda x: (x, safe(lambda: series_markets(x["ticker"]), None)), due):
+        for i, (x, mk) in enumerate(ex.map(lambda x: (x, safe(lambda: series_markets(x["ticker"]), None)), due)):
             if mk is not None:
                 _series_data[x["ticker"]] = (time.time(), mk)
+            if not core_only and _snapshot["groups"] and i % 6 == 5:
+                _snapshot.update(groups=build_groups(series), at=time.time())   # show props as they arrive
+    if not core_only and time.time() - t0 > 30:
+        print("[%s] Kalshi refresh took %ds for %d lists" % (time.strftime("%H:%M:%S"), time.time() - t0, len(due)), flush=True)
+    return build_groups(series)
+
+def build_groups(series):
     results = [(x, _series_data.get(x["ticker"], (0, []))[1]) for x in series]
     groups = {}
     for s, mkts in results:
