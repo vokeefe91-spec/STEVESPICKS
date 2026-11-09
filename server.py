@@ -336,6 +336,24 @@ def games(week=None):
     return {"week": wk, "weekKey": "%s-%s" % (st, wk), "season": (sb.get("season") or {}).get("year"), "games": evs,
             "weeks": _weeks_cache["list"], "updated": time.time(), "status": STATUS}
 
+def tag_teams(mk, g):
+    """Kalshi player tickers start with the team code, e.g. ...-BUFJALLEN17-1 -> Bills."""
+    sides = []
+    for side in ("away", "home"):
+        ab = (g.get(side) or {}).get("abbr") or ""
+        for c in codes(ab):
+            sides.append((c, ab))
+    sides.sort(key=lambda x: -len(x[0]))
+    for m in mk:
+        parts = (m.get("ticker") or "").split("-")
+        if len(parts) < 3 or m.get("series_ticker") == "KXNFLGAME":
+            continue
+        seg = parts[2]
+        for c, ab in sides:
+            if seg.startswith(c) and len(seg) > len(c) and seg[len(c)].isalpha():
+                m["team"] = ab
+                break
+
 def game_detail(eid):
     s = safe(lambda: get_json(ESPN + "/summary?" + urllib.parse.urlencode({"event": eid}), 8), {})
     hdr = s.get("header", {})
@@ -378,6 +396,7 @@ def game_detail(eid):
     groups = snapshot()
     k = match_key(groups, g["away"].get("abbr", ""), g["home"].get("abbr", ""))
     mk = order_markets(groups.get(k, [])) if k else []
+    tag_teams(mk, g)
     return {"game": g, "drives": drives, "leaders": leaders, "scoring": scoring, "linescores": lines,
             "markets": mk, "updated": time.time()}
 
