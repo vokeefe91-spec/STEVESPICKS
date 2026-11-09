@@ -135,8 +135,8 @@ h2:first-child{margin-top:4px}
 .chips2{display:flex;gap:8px;flex-wrap:wrap;padding:12px 14px 4px}
 .chips2 button{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 14px;font-weight:600;font-size:13.5px}
 .chips2 button.on{background:var(--soft);border-color:var(--ink)}
-.dot.logo{background:none}
-.dot.logo img{width:100%;height:100%;object-fit:contain}
+.dot.tlogo{background:none;display:block;overflow:hidden}
+.dot.tlogo img{display:block;width:100%;height:100%;max-width:100%;object-fit:contain}
 .weekbar{display:flex;align-items:center;gap:8px;margin:4px 0 6px;flex-wrap:wrap}
 .weekbar>button:not(.sell){border:1px solid var(--line);background:var(--card);border-radius:10px;width:38px;height:38px;font-size:18px;font-weight:700}
 .weekbar>button:disabled{opacity:.35;cursor:default}
@@ -386,7 +386,7 @@ function kickoff(iso){
 function teamDot(t){ const c = t.color ? "#"+t.color : "#888";
   const badge=`<div class="dot" style="background:${c}">${esc(t.abbr||"")}</div>`;
   if(!t.logo || !/^https:\/\//.test(t.logo)) return badge;
-  return `<div class="dot logo"><img src="${esc(t.logo)}" alt="${esc(t.abbr||"")}" loading="lazy" onerror="this.parentNode.outerHTML=this.parentNode.dataset.badge" ></div>`.replace('<div class="dot logo">',`<div class="dot logo" data-badge='${badge.replace(/'/g,"&#39;")}'>`) }
+  return `<div class="dot tlogo"><img src="${esc(t.logo)}" alt="${esc(t.abbr||"")}" loading="lazy" onerror="this.parentNode.outerHTML=this.parentNode.dataset.badge" ></div>`.replace('<div class="dot tlogo">',`<div class="dot tlogo" data-badge='${badge.replace(/'/g,"&#39;")}'>`) }
 function gameLabel(g){ return `${g.away.abbr} @ ${g.home.abbr}` }
 function inSlip(t,side){ return S.slip.some(l=>l.ticker===t && l.side===side) }
 
