@@ -154,6 +154,7 @@ def clean_market(m, series_title):
             "label": (m.get("yes_sub_title") or m.get("title") or m.get("ticker") or "").strip(),
             "no_label": m.get("no_sub_title") or "",
             "rules": m.get("rules_primary") or "",
+            "full": m.get("title") or "",
             "yes_bid": yb, "yes_ask": ya, "no_bid": nb, "no_ask": na, "last": last,
             "chance": round(chance * 100) if chance is not None else None,
             "volume": money(m.get("volume_fp")) or 0, "close": m.get("close_time"),
@@ -166,7 +167,7 @@ _series_data = {}   # ticker -> (fetched_at, markets)
 def all_nfl_markets():
     """Returns {(date, teams): [market, ...]} for every open NFL market on Kalshi.
     Winner/spread/total refresh every loop; props every 3 minutes (Kalshi rate-limits heavy use)."""
-    series = [x for x in nfl_series() if not re.search(r"protected|precise|escalator", x.get("title") or "", re.I)]
+    series = [x for x in nfl_series() if not re.search(r"protected|precise|escalator|margin", x.get("title") or "", re.I)]
     now = time.time()
     due = [x for x in series if x["ticker"] in CORE or now - _series_data.get(x["ticker"], (0, None))[0] > 180]
     with ThreadPoolExecutor(max_workers=2) as ex:
@@ -345,6 +346,19 @@ def games(week=None):
     return {"week": wk, "weekKey": "%s-%s" % (st, wk), "season": (sb.get("season") or {}).get("year"), "games": evs,
             "weeks": _weeks_cache["list"], "updated": time.time(), "status": STATUS}
 
+def label_repeats(mk):
+    """If one market group shows the same label twice (e.g. Race to Points: Buffalo, Buffalo), add the number that tells them apart."""
+    seen = {}
+    for m in mk:
+        seen.setdefault((m.get("series_ticker"), m["label"]), []).append(m)
+    for (_, lab), ms in seen.items():
+        if len(ms) < 2:
+            continue
+        for m in ms:
+            num = re.findall(r"\d+(?:\.\d+)?", m.get("full") or "") or re.findall(r"\d+", m["ticker"].rsplit("-", 1)[-1])
+            if num:
+                m["label"] = "%s · %s" % (lab, (m.get("full") or "").strip() or num[-1])
+
 def tag_teams(mk, g):
     """Kalshi player tickers start with the team code, e.g. ...-BUFJALLEN17-1 -> Bills."""
     sides = []
@@ -359,8 +373,8 @@ def tag_teams(mk, g):
             continue
         seg = parts[2]
         for c, ab in sides:
-            if seg.startswith(c) and len(seg) > len(c) and seg[len(c)].isalpha():
-                m["team"] = ab
+            if seg.startswith(c) and re.match(r"^[A-Z]+\d+$", seg[len(c):] or ""):
+                m["pteam"] = ab
                 break
 
 def game_detail(eid):
@@ -406,6 +420,7 @@ def game_detail(eid):
     k = match_key(groups, g["away"].get("abbr", ""), g["home"].get("abbr", ""))
     mk = order_markets(groups.get(k, [])) if k else []
     tag_teams(mk, g)
+    label_repeats(mk)
     return {"game": g, "drives": drives, "leaders": leaders, "scoring": scoring, "linescores": lines,
             "markets": mk, "updated": time.time()}
 
@@ -760,6 +775,33 @@ def settler():
             safe(settle_open, None)
         time.sleep(60)
 
+# ---------------------------------------------------------------- phone app (logo, manifest, icons)
+LOGO_SVG = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><path id="sh" d="M256 34 C330 70 392 78 446 74 L446 250 C446 360 370 430 256 478 C142 430 66 360 66 250 L66 74 C120 78 182 70 256 34 Z"/><path id="sp" d="M170.5 302.9C218.6 302.9 248.8 282.7 254.8 246.2C259.8 215.6 244.1 198.1 203.4 190.5L189.1 187.8C170.8 184.3 164.7 179.5 166.2 170.8C167.7 161.6 178.8 155.2 193.0 155.2C208.7 155.2 217.0 162.5 216.1 175.7H262.8C267.9 137.6 241.9 115.1 196.2 115.1C153.3 115.1 120.8 137.1 115.3 170.1C110.5 198.6 127.6 218.8 161.6 225.4L179.1 228.8C198.9 232.6 206.1 238.1 204.6 246.8C203.1 256.4 191.2 262.8 175.2 262.8C156.8 262.8 146.7 254.2 148.4 239.4H100.4C93.8 279.3 118.8 302.9 170.5 302.9Z M256.1 300.0H306.9L315.9 245.0H342.4C385.9 245.0 417.2 220.5 423.7 181.5C430.1 142.6 406.9 118.1 363.5 118.1H286.3ZM322.9 203.3 330.1 159.8H352.8C368.0 159.8 376.3 168.2 374.1 181.5C371.8 194.8 360.8 203.3 345.6 203.3Z"/><linearGradient id="bg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3038"/><stop offset="1" stop-color="#14171b"/></linearGradient><linearGradient id="sh1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#262c34"/><stop offset="1" stop-color="#101317"/></linearGradient><linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f7fa"/><stop offset=".48" stop-color="#c9d1da"/><stop offset=".52" stop-color="#9aa6b3"/><stop offset="1" stop-color="#e8edf2"/></linearGradient><linearGradient id="grn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5ff0b3"/><stop offset="1" stop-color="#1fb87b"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#bg1)"/><use href="#sh" fill="url(#grn)" transform="translate(256 256) scale(1.0) translate(-256 -256)"/><use href="#sh" fill="url(#sh1)" transform="translate(256 258) scale(.94) translate(-256 -256)"/><use href="#sh" fill="none" stroke="url(#chrome)" stroke-width="3" transform="translate(256 258) scale(.88) translate(-256 -256)"/><path d="M256.0,79.0 L259.2,87.5 L268.3,87.9 L261.1,93.6 L263.6,102.5 L256.0,97.4 L248.3,102.5 L250.8,93.6 L243.6,87.9 L252.7,87.5Z" fill="url(#grn)"/><path d="M210.0,92.0 L211.9,97.2 L217.6,97.5 L213.2,101.0 L214.7,106.4 L210.0,103.3 L205.3,106.4 L206.8,101.0 L202.3,97.5 L208.0,97.2Z" fill="#c9d1da"/><path d="M302.0,92.0 L303.9,97.2 L309.6,97.5 L305.2,101.0 L306.7,106.4 L302.0,103.3 L297.3,106.4 L298.8,101.0 L294.3,97.5 L300.0,97.2Z" fill="#c9d1da"/><g transform="translate(6 8)"><use href="#sp" fill="#0b0d10" opacity=".55"/></g><use href="#sp" fill="url(#grn)" transform="translate(3 4)"/><use href="#sp" fill="url(#chrome)" stroke="#0b0d10" stroke-width="5" paint-order="stroke"/><line x1="181.0" y1="345.0" x2="331.0" y2="345.0" stroke="#e8edf2" stroke-width="7" stroke-linecap="round"/><line x1="196.0" y1="332.0" x2="196.0" y2="358.0" stroke="#e8edf2" stroke-width="7" stroke-linecap="round"/><line x1="226.0" y1="332.0" x2="226.0" y2="358.0" stroke="#e8edf2" stroke-width="7" stroke-linecap="round"/><line x1="256.0" y1="332.0" x2="256.0" y2="358.0" stroke="#e8edf2" stroke-width="7" stroke-linecap="round"/><line x1="286.0" y1="332.0" x2="286.0" y2="358.0" stroke="#e8edf2" stroke-width="7" stroke-linecap="round"/><line x1="316.0" y1="332.0" x2="316.0" y2="358.0" stroke="#e8edf2" stroke-width="7" stroke-linecap="round"/><path d="M108 372 L404 372 L384 404 L404 436 L108 436 L128 404 Z" fill="url(#grn)"/><path d="M108 372 L404 372 L384 404 L404 436 L108 436 L128 404 Z" fill="none" stroke="#0b0d10" stroke-opacity=".35" stroke-width="2"/><path d="M141.7 415.3C147.6 415.3 151.0 412.7 151.0 408.1C151.0 404.6 148.9 402.7 143.9 401.8L142.1 401.5C139.9 401.0 138.9 400.5 138.9 399.5C138.9 398.4 140.1 397.6 141.8 397.6C143.6 397.6 144.8 398.5 145.0 400.0H150.6C150.4 395.5 147.1 392.8 141.7 392.8C136.4 392.8 132.8 395.6 132.8 399.7C132.8 403.0 135.0 405.2 139.3 406.0L141.4 406.4C143.9 406.9 145.0 407.5 145.0 408.6C145.0 409.7 143.7 410.5 141.8 410.5C139.6 410.5 138.2 409.5 138.1 407.7H132.3C132.3 412.6 135.7 415.3 141.7 415.3Z M154.3 398.3H160.6V415.0H166.7V398.3H172.9V393.1H154.3Z M176.4 415.0H193.3V409.8H182.5V406.5H192.5V401.6H182.5V398.3H193.3V393.1H176.4Z M203.3 415.0H211.4L218.5 393.1H211.9L209.5 401.6C208.7 404.1 208.1 406.7 207.4 409.2C206.7 406.7 206.0 404.1 205.2 401.6L202.7 393.1H196.0Z M221.5 415.0H238.4V409.8H227.6V406.5H237.5V401.6H227.6V398.3H238.4V393.1H221.5Z M243.3 402.1H247.4L247.9 393.1H242.8Z M261.8 415.3C267.7 415.3 271.1 412.7 271.1 408.1C271.1 404.6 268.9 402.7 263.9 401.8L262.2 401.5C259.9 401.0 258.9 400.5 258.9 399.5C258.9 398.4 260.1 397.6 261.8 397.6C263.6 397.6 264.9 398.5 265.0 400.0H270.6C270.5 395.5 267.2 392.8 261.7 392.8C256.4 392.8 252.8 395.6 252.8 399.7C252.8 403.0 255.1 405.2 259.3 406.0L261.5 406.4C263.9 406.9 265.0 407.5 265.0 408.6C265.0 409.7 263.8 410.5 261.8 410.5C259.6 410.5 258.2 409.5 258.1 407.7H252.4C252.4 412.6 255.7 415.3 261.8 415.3Z M282.3 415.0H288.4V408.4H291.5C296.8 408.4 300.0 405.4 300.0 400.7C300.0 396.1 296.8 393.1 291.5 393.1H282.3ZM288.4 403.3V398.1H291.1C292.9 398.1 294.1 399.1 294.1 400.7C294.1 402.3 292.9 403.3 291.1 403.3Z M309.6 393.1H303.5V415.0H309.6Z M323.8 415.3C329.4 415.3 333.3 411.9 333.9 406.7H327.8C327.4 408.8 326.0 410.0 323.9 410.0C320.9 410.0 319.3 407.9 319.3 404.1C319.3 400.2 320.9 398.0 323.9 398.0C326.0 398.0 327.4 399.3 327.8 401.4H333.9C333.3 396.2 329.4 392.8 323.8 392.8C317.8 392.8 313.2 396.8 313.2 404.1C313.2 411.3 317.8 415.3 323.8 415.3Z M337.4 415.0H343.5V409.9L346.2 406.6L351.2 415.0H358.1L350.1 402.5L357.7 393.1H350.7L346.3 398.7C345.4 400.0 344.5 401.2 343.5 402.4V393.1H337.4Z M370.2 415.3C376.2 415.3 379.6 412.7 379.6 408.1C379.6 404.6 377.4 402.7 372.4 401.8L370.7 401.5C368.4 401.0 367.4 400.5 367.4 399.5C367.4 398.4 368.6 397.6 370.3 397.6C372.1 397.6 373.4 398.5 373.5 400.0H379.1C378.9 395.5 375.7 392.8 370.2 392.8C364.9 392.8 361.3 395.6 361.3 399.7C361.3 403.0 363.6 405.2 367.8 406.0L370.0 406.4C372.4 406.9 373.5 407.5 373.5 408.6C373.5 409.7 372.2 410.5 370.3 410.5C368.1 410.5 366.7 409.5 366.6 407.7H360.9C360.9 412.6 364.2 415.3 370.2 415.3Z" fill="#0b2a1d"/></svg>'''
+MANIFEST = {"name": "Steve's Picks", "short_name": "Steve's Picks", "start_url": "/", "scope": "/", "display": "standalone",
+            "background_color": "#1b1f24", "theme_color": "#1b1f24",
+            "icons": [{"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"},
+                      {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"},
+                      {"src": "/logo.svg", "sizes": "any", "type": "image/svg+xml"}]}
+SW_JS = "self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',e=>{});"
+ICONS = {"icon-192.png", "icon-512.png", "apple-touch-icon.png"}
+ICON_DIR = os.path.join(DATA_DIR, "icons")
+
+def icon_bytes(name):
+    try:
+        with open(os.path.join(ICON_DIR, name), "rb") as f:
+            return f.read()
+    except Exception:
+        return None
+
+def save_icon(name, data):
+    """The app draws its icons from the logo in the browser the first time it opens and sends them here to keep."""
+    if name not in ICONS or not data.startswith(b"\x89PNG") or len(data) > 400000 or icon_bytes(name):
+        return False
+    os.makedirs(ICON_DIR, exist_ok=True)
+    with open(os.path.join(ICON_DIR, name), "wb") as f:
+        f.write(data)
+    return True
+
 # ---------------------------------------------------------------- web server
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a):
@@ -803,6 +845,15 @@ class H(BaseHTTPRequestHandler):
                 return self.send(200, {"bank": st["bank"], "bets": st["bets"]})
             if u.path == "/api/record":
                 return self.send(200, record())
+            if u.path == "/logo.svg":
+                return self.send(200, LOGO_SVG.encode(), "image/svg+xml")
+            if u.path == "/manifest.webmanifest":
+                return self.send(200, json.dumps(MANIFEST).encode(), "application/manifest+json")
+            if u.path == "/sw.js":
+                return self.send(200, SW_JS.encode(), "text/javascript")
+            if u.path.lstrip("/") in ICONS:
+                b = icon_bytes(u.path.lstrip("/"))
+                return self.send(200, b, "image/png") if b else self.send(404, {"error": "not made yet"})
             if u.path == "/health":
                 return self.send(200, {"ok": True})
             self.send(404, {"error": "not found"})
@@ -812,8 +863,11 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         u = urllib.parse.urlparse(self.path)
         n = int(self.headers.get("Content-Length") or 0)
+        raw = self.rfile.read(min(n, 500000)) if n else b""
+        if u.path.startswith("/api/icon/"):
+            return self.send(200, {"saved": save_icon(u.path.rsplit("/", 1)[-1], raw)})
         try:
-            body = json.loads(self.rfile.read(n) or b"{}")
+            body = json.loads(raw or b"{}")
         except Exception:
             body = {}
         if u.path == "/api/check":
